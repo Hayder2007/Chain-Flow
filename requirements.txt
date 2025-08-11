@@ -1,0 +1,242 @@
+I have deployed my own smart contract on Somnia Testnet on remix with the following details:
+
+Contract address:
+0xb07bbd46ec078d7a990a87999acac46a9c737a47
+
+ABI:
+[ [
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "habitId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "dayIndex",
+				"type": "uint256"
+			}
+		],
+		"name": "checkIn",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "habitId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "dayIndex",
+				"type": "uint256"
+			}
+		],
+		"name": "CheckinDone",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "category",
+				"type": "string"
+			}
+		],
+		"name": "createHabit",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "habitId",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "category",
+				"type": "string"
+			}
+		],
+		"name": "HabitCreated",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "checkins",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "habitId",
+				"type": "uint256"
+			}
+		],
+		"name": "getHabit",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getHabitsCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "habits",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "description",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "category",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "habitId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "dayIndex",
+				"type": "uint256"
+			}
+		],
+		"name": "isCheckedIn",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+] ]
+
+Requirements:
+1. Remove all thirdweb code and dependencies from the project — I don't want anything from thirdweb in my code.
+2. Keep my current wallet connection exactly as it is now (it's using wagmi with injected wallet/Metamask, and it works fine).
+3. Replace all habit creation and check-in logic to use ethers.js + wagmi to interact directly with my smart contract using the ABI and contract address above.
+4. Every createHabit and checkIn call must:
+   - Require the user to sign a transaction.
+   - Only update the UI after the transaction is confirmed onchain.
+   - If the user rejects the transaction, nothing should be updated locally.
+5. Use Somnia Testnet RPC for all contract interactions — do NOT use Ethereum mainnet.
+6. All habit data (name, description, category, check-ins) must be read directly from the blockchain via the contract functions.
+7. Completely onchain logic — no local/optimistic updates for habit creation or check-in.
+
+In short: Remove thirdweb, keep my wagmi wallet connection, integrate my contract directly with ethers.js/wagmi, make everything fully onchain on Somnia Testnet, and follow the ABI exactly.

@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 98%; /* Light background */
+    --foreground: 240 5.3% 26.1%; /* Dark text */
+    --card: 0 0% 100%; /* White card background */
+    --card-foreground: 240 5.3% 26.1%; /* Dark text on card */
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 5.3% 26.1%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217.2 91.2% 59.8%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 5.9% 10%; /* Dark background */
+    --foreground: 240 4.8% 95.9%; /* Light text */
+    --card: 240 3.7% 15.9%; /* Darker card background */
+    --card-foreground: 240 4.8% 95.9%; /* Light text on card */
+    --popover: 240 5.9% 10%;
+    --popover-foreground: 240 4.8% 95.9%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 240 4.8% 95.9%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 240 4.8% 95.9%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%; /* Darker input background */
+    --ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom styles for dark mode form fields */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: hsl(var(--input)); /* Use the input variable for consistency */
+  border-color: hsl(var(--border)); /* Use the border variable */
+  color: hsl(var(--foreground)); /* Use foreground for text color */
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: hsl(var(--muted-foreground)); /* Use muted-foreground for placeholders */
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #00ffe5; /* Custom focus color */
+  box-shadow: 0 0 0 2px rgba(0, 255, 229, 0.2); /* Custom focus ring */
+}
+
+/* Ensure select arrow is visible in dark mode */
+.dark select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23F5F7FA' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1em;
+}
