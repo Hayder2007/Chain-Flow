@@ -12,9 +12,9 @@ export const metadata: Metadata = {
     "One platform to track your personal growth and manage decentralized workstreams — all verified onchain.",
   generator: "v0.dev",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: "/logo-light.svg",
+    shortcut: "/logo-light.svg",
+    apple: "/logo-light.svg",
   },
 }
 
