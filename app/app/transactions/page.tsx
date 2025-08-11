@@ -26,7 +26,7 @@ import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
 import { WalletConnect } from "@/components/wallet-connect"
 import { useTransactionHistory, type Transaction } from "@/hooks/use-transaction-history"
-import { useActiveAccount } from "thirdweb/react"
+import { useAccount } from "wagmi"
 
 export default function TransactionHistory() {
   const [searchTerm, setSearchTerm] = useState("")
@@ -34,7 +34,7 @@ export default function TransactionHistory() {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "confirmed" | "failed">("all")
   const { theme, toggleTheme } = useTheme()
   const isDarkMode = theme === "dark"
-  const account = useActiveAccount()
+  const { address: account } = useAccount()
   const { transactions, getStats, clearTransactions } = useTransactionHistory()
 
   const stats = getStats()
@@ -106,7 +106,7 @@ export default function TransactionHistory() {
     const dataStr = JSON.stringify(transactions, null, 2)
     const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr)
 
-    const exportFileDefaultName = `chainflow_transactions_${account?.address?.slice(0, 8)}_${new Date().toISOString().split("T")[0]}.json`
+    const exportFileDefaultName = `chainflow_transactions_${account?.slice(0, 8)}_${new Date().toISOString().split("T")[0]}.json`
 
     const linkElement = document.createElement("a")
     linkElement.setAttribute("href", dataUri)
