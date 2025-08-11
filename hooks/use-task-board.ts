@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSwitchChain, useReadContract } from "wagmi"
-import { toast } from "sonner"
+import { toast } from "@/hooks/use-toast" // Using same toast as habit tracker
 
 export interface Task {
   id: number
@@ -123,6 +123,9 @@ export function useTaskBoard() {
   const { switchChain } = useSwitchChain()
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isCreatingTask, setIsCreatingTask] = useState(false) // Added specific loading states
+  const [isCompletingTask, setIsCompletingTask] = useState(false)
+  const [transactionError, setTransactionError] = useState<string | null>(null)
 
   const { writeContract, data: hash, isPending, error } = useWriteContract()
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
@@ -137,38 +140,108 @@ export function useTaskBoard() {
   })
 
   const refreshTasksData = async () => {
-    await refetchTasksCount()
-    await loadTasksFromBlockchain()
+    if (!address) return
+
+    setIsLoading(true)
+
+    try {
+      // Force refetch the tasks count first
+      const { data: freshTasksCount } = await refetchTasksCount()
+      const count = Number(freshTasksCount || 0)
+
+      if (count === 0) {
+        setTasks([])
+        setIsLoading(false)
+        return
+      }
+
+      const loadedTasks: Task[] = []
+
+      // Load each task from blockchain
+      for (let i = 0; i < count; i++) {
+        try {
+          const taskData = await fetch(`/api/task/${i}`, {
+            method: "GET",
+          }).then((res) => res.json())
+
+          if (taskData && taskData.title) {
+            loadedTasks.push({
+              id: i,
+              title: taskData.title,
+              description: taskData.description,
+              assignee: taskData.assignee,
+              creator: taskData.creator,
+              reward: taskData.reward,
+              completed: taskData.completed,
+            })
+          }
+        } catch (error) {
+          console.error(`Error loading task ${i}:`, error)
+        }
+      }
+
+      setTasks(loadedTasks)
+    } catch (error) {
+      console.error("Error refreshing tasks from blockchain:", error)
+      toast({
+        title: "Error Loading Tasks",
+        description: "Failed to load tasks from blockchain. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const loadTasksFromBlockchain = async () => {
-    const { data: latestTasksCount } = await refetchTasksCount()
-    const currentCount = latestTasksCount || tasksCount
-
-    if (!currentCount || currentCount === 0n) {
+    if (!address) {
       setTasks([])
       return
     }
 
     setIsLoading(true)
-    try {
-      const taskPromises = []
-      const count = Number(currentCount)
 
-      for (let i = 0; i < count; i++) {
-        taskPromises.push(
-          fetch(`/api/task/${i}`)
-            .then((res) => res.json())
-            .then((data) => ({ id: i, ...data })),
-        )
+    try {
+      const count = Number(tasksCount || 0)
+
+      if (count === 0) {
+        setTasks([])
+        setIsLoading(false)
+        return
       }
 
-      const taskResults = await Promise.all(taskPromises)
-      const validTasks = taskResults.filter((task) => task.title) // Filter out invalid tasks
-      setTasks(validTasks)
+      const loadedTasks: Task[] = []
+
+      for (let i = 0; i < count; i++) {
+        try {
+          const taskData = await fetch(`/api/task/${i}`, {
+            method: "GET",
+          }).then((res) => res.json())
+
+          if (taskData && taskData.title) {
+            loadedTasks.push({
+              id: i,
+              title: taskData.title,
+              description: taskData.description,
+              assignee: taskData.assignee,
+              creator: taskData.creator,
+              reward: taskData.reward,
+              completed: taskData.completed,
+            })
+          }
+        } catch (error) {
+          console.error(`Error loading task ${i}:`, error)
+        }
+      }
+
+      setTasks(loadedTasks)
     } catch (error) {
       console.error("Error loading tasks from blockchain:", error)
-      toast.error("Failed to load tasks from blockchain")
+      toast({
+        title: "Error Loading Tasks",
+        description: "Failed to load tasks from blockchain. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -182,18 +255,20 @@ export function useTaskBoard() {
 
   useEffect(() => {
     if (isConfirmed && hash) {
-      toast.success("Transaction confirmed! Task updated successfully.")
+      setIsCreatingTask(false)
+      setIsCompletingTask(false)
+
+      toast({
+        title: "Transaction Confirmed",
+        description: "Your transaction has been confirmed on the blockchain!",
+      })
+
+      // Immediately refresh data from blockchain
       setTimeout(() => {
         refreshTasksData()
       }, 1000) // Small delay to ensure blockchain state is updated
     }
   }, [isConfirmed, hash])
-
-  useEffect(() => {
-    if (error) {
-      toast.error(`Transaction failed: ${error.message}`)
-    }
-  }, [error])
 
   const ensureCorrectNetwork = async () => {
     if (chainId !== SOMNIA_TESTNET_CHAIN_ID) {
@@ -201,7 +276,11 @@ export function useTaskBoard() {
         await switchChain({ chainId: SOMNIA_TESTNET_CHAIN_ID })
         return true
       } catch (error) {
-        toast.error("Please switch to Somnia Testnet to create tasks")
+        toast({
+          title: "Network Switch Required",
+          description: "Please switch to Somnia Testnet to use this feature.",
+          variant: "destructive",
+        })
         return false
       }
     }
@@ -210,12 +289,19 @@ export function useTaskBoard() {
 
   const createTask = async (taskData: { title: string; description: string; assignee: string; reward: string }) => {
     if (!address) {
-      toast.error("Please connect your wallet")
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet to create tasks.",
+        variant: "destructive",
+      })
       return
     }
 
     const networkOk = await ensureCorrectNetwork()
     if (!networkOk) return
+
+    setIsCreatingTask(true)
+    setTransactionError(null)
 
     try {
       writeContract({
@@ -226,21 +312,36 @@ export function useTaskBoard() {
         chainId: SOMNIA_TESTNET_CHAIN_ID,
       })
 
-      toast.info("Transaction sent. Please wait for confirmation...")
-    } catch (error) {
-      console.error("Error creating task:", error)
-      toast.error("Failed to create task")
+      toast({
+        title: "Transaction Pending",
+        description: "Please sign the transaction to create your task...",
+      })
+    } catch (err: any) {
+      setTransactionError(err.message || "Failed to create task")
+      toast({
+        title: "Transaction Failed",
+        description: err.message || "Failed to create task on blockchain",
+        variant: "destructive",
+      })
+      setIsCreatingTask(false)
     }
   }
 
   const completeTask = async (taskId: number) => {
     if (!address) {
-      toast.error("Please connect your wallet")
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet to complete tasks.",
+        variant: "destructive",
+      })
       return
     }
 
     const networkOk = await ensureCorrectNetwork()
     if (!networkOk) return
+
+    setIsCompletingTask(true)
+    setTransactionError(null)
 
     try {
       writeContract({
@@ -251,10 +352,18 @@ export function useTaskBoard() {
         chainId: SOMNIA_TESTNET_CHAIN_ID,
       })
 
-      toast.info("Transaction sent. Please wait for confirmation...")
-    } catch (error) {
-      console.error("Error completing task:", error)
-      toast.error("Failed to complete task")
+      toast({
+        title: "Transaction Pending",
+        description: "Please sign the transaction to complete the task...",
+      })
+    } catch (err: any) {
+      setTransactionError(err.message || "Failed to complete task")
+      toast({
+        title: "Transaction Failed",
+        description: err.message || "Failed to complete task on blockchain",
+        variant: "destructive",
+      })
+      setIsCompletingTask(false)
     }
   }
 
@@ -274,8 +383,10 @@ export function useTaskBoard() {
     createTask,
     completeTask,
     getStats,
-    isLoading: isLoading || isPending || isConfirming,
-    error: error?.message,
-    refreshTasks: refreshTasksData,
+    isLoading: isLoading,
+    isCreatingTask: isCreatingTask || isPending || isConfirming,
+    isCompletingTask: isCompletingTask || isPending || isConfirming,
+    transactionError,
+    refreshTasks: refreshTasksData, // Expose manual refresh function
   }
 }
