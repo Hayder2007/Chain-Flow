@@ -10,7 +10,12 @@ export const metadata: Metadata = {
   title: "ChainFlow - Own Your Flow",
   description:
     "One platform to track your personal growth and manage decentralized workstreams — all verified onchain.",
-    generator: 'v0.dev'
+  generator: "v0.dev",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 }
 
 export default function RootLayout({
