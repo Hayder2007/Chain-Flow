@@ -1,9 +1,8 @@
 "use client"
 
 import type React from "react"
-
-import { WagmiProvider } from "wagmi"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { WagmiProvider } from "wagmi"
 import { config } from "@/lib/wagmi"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"

@@ -1,7 +1,8 @@
 import { createConfig, http } from "wagmi"
-import { injected } from "wagmi/connectors"
+import { defineChain } from "viem"
+import { injected, metaMask, coinbaseWallet, walletConnect } from "wagmi/connectors"
 
-const somniaTestnet = {
+const somniaTestnet = defineChain({
   id: 50312,
   name: "Somnia Testnet",
   nativeCurrency: {
@@ -11,27 +12,31 @@ const somniaTestnet = {
   },
   rpcUrls: {
     default: {
-      http: ["https://dream-rpc.somnia.network/"],
+      http: ["https://rpc.testnet.somnia.network"],
     },
   },
   blockExplorers: {
     default: {
       name: "Somnia Explorer",
-      url: "https://shannon-explorer.somnia.network/",
+      url: "https://explorer.somnia.network",
     },
   },
   testnet: true,
-}
+})
+
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "demo-project-id"
 
 export const config = createConfig({
   chains: [somniaTestnet],
   connectors: [
-    injected({
-      target: "metaMask",
-    }),
+    injected({ shimDisconnect: true }),
+    metaMask(),
+    coinbaseWallet({ appName: "ChainFlow" }),
+    walletConnect({ projectId }),
   ],
   transports: {
-    [somniaTestnet.id]: http("https://dream-rpc.somnia.network/"),
+    [somniaTestnet.id]: http(),
   },
-  ssr: false,
 })
+
+export { somniaTestnet }
