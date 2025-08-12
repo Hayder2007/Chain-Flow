@@ -1,6 +1,6 @@
-import { createConfig, http } from "wagmi"
+import { defaultWagmiConfig } from "@web3modal/wagmi/react/config"
 import { defineChain } from "viem"
-import { injected, metaMask, coinbaseWallet, walletConnect } from "wagmi/connectors"
+import { injected, metaMask, coinbaseWallet } from "wagmi/connectors"
 
 const somniaTestnet = defineChain({
   id: 50312,
@@ -24,19 +24,23 @@ const somniaTestnet = defineChain({
   testnet: true,
 })
 
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "demo-project-id"
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
 
-export const config = createConfig({
+if (!projectId) {
+  console.warn("WalletConnect Project ID is not defined. Some wallet features may not work.")
+}
+
+// Create wagmiConfig - defaultWagmiConfig already includes WalletConnect
+export const config = defaultWagmiConfig({
   chains: [somniaTestnet],
-  connectors: [
-    injected({ shimDisconnect: true }),
-    metaMask(),
-    coinbaseWallet({ appName: "ChainFlow" }),
-    walletConnect({ projectId }),
-  ],
-  transports: {
-    [somniaTestnet.id]: http(),
+  projectId: projectId || "demo-project-id", // Use demo ID if not provided
+  metadata: {
+    name: "ChainFlow",
+    description: "ChainFlow - Decentralized Task and Habit Management",
+    url: "https://chainflow.xyz",
+    icons: ["https://chainflow.xyz/logo.png"],
   },
+  connectors: [injected({ shimDisconnect: true }), metaMask(), coinbaseWallet({ appName: "ChainFlow" })],
 })
 
 export { somniaTestnet }
