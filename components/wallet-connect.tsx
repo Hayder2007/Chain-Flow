@@ -15,6 +15,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
   const { open } = useWeb3Modal()
   const { toast } = useToast()
   const [isWrongNetwork, setIsWrongNetwork] = useState(false)
+  const [isConnecting, setIsConnecting] = useState(false)
 
   useEffect(() => {
     if (isConnected && chain && chain.id !== somniaTestnet.id) {
@@ -56,15 +57,33 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
   }, [isConnected, address, toast, isWrongNetwork])
 
   const handleConnect = async () => {
+    setIsConnecting(true)
     try {
-      await open()
+      // Check if WalletConnect is properly configured
+      if (!process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) {
+        // Fallback to injected wallet if WalletConnect is not configured
+        const { ethereum } = window as any
+        if (ethereum) {
+          await ethereum.request({ method: "eth_requestAccounts" })
+        } else {
+          toast({
+            title: "No Wallet Found",
+            description: "Please install MetaMask or another Web3 wallet.",
+            variant: "destructive",
+          })
+        }
+      } else {
+        await open()
+      }
     } catch (err) {
       console.error("Connection error:", err)
       toast({
         title: "Connection Error",
-        description: "Failed to open wallet selection. Please try again.",
+        description: "Failed to connect wallet. Please try again.",
         variant: "destructive",
       })
+    } finally {
+      setIsConnecting(false)
     }
   }
 
@@ -117,9 +136,10 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
         borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(0, 0, 0, 0.2)",
       }}
       onClick={handleConnect}
+      disabled={isConnecting}
     >
       <Wallet className="w-4 h-4 mr-2" />
-      Connect Wallet
+      {isConnecting ? "Connecting..." : "Connect Wallet"}
     </Button>
   )
 }
