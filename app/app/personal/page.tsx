@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,16 +13,17 @@ import { Progress } from "@/components/ui/progress"
 import { Target, Plus, CheckCircle, Flame, TrendingUp, Sun, Moon, ArrowLeft, Activity, Zap } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
-import { WalletConnect } from "@/components/wallet-connect"
 import { useAccount } from "wagmi"
 import { useHabitTracker, type Habit } from "@/hooks/use-habit-tracker"
 import { useToast } from "@/hooks/use-toast"
+import { BlockchainLoading } from "@/components/blockchain-loading"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 export default function PersonalZone() {
   const { theme, toggleTheme } = useTheme()
   const isDarkMode = theme === "dark"
   const { address } = useAccount()
-  const { habits, addHabit, checkInHabit, deleteHabit, getStats } = useHabitTracker()
+  const { habits, addHabit, checkInHabit, getStats, isLoadingHabits } = useHabitTracker()
   const { toast } = useToast()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [newHabit, setNewHabit] = useState({
@@ -30,10 +31,11 @@ export default function PersonalZone() {
     description: "",
     category: "fitness" as Habit["category"],
   })
+  const [isCreatingHabit, setIsCreatingHabit] = useState(false)
 
-  const stats = getStats()
+  const stats = getStats
 
-  const handleCreateHabit = () => {
+  const handleCreateHabit = useCallback(async () => {
     if (!newHabit.name.trim()) {
       toast({
         title: "Error",
@@ -43,24 +45,61 @@ export default function PersonalZone() {
       return
     }
 
-    addHabit(newHabit)
-    setNewHabit({ name: "", description: "", category: "fitness" })
-    setIsCreateDialogOpen(false)
-    toast({
-      title: "Success",
-      description: "Habit created successfully!",
-    })
-  }
+    setIsCreatingHabit(true)
 
-  const handleCheckIn = (habitId: string) => {
-    checkInHabit(habitId)
-    toast({
-      title: "Great job!",
-      description: "Habit checked in successfully",
+    const loadingToastId = toast({
+      title: "Creating habit...",
+      description: "Recording your habit on the blockchain",
     })
-  }
 
-  const getCategoryIcon = (category: Habit["category"]) => {
+    try {
+      await addHabit(newHabit)
+      setNewHabit({ name: "", description: "", category: "fitness" })
+      setIsCreateDialogOpen(false)
+      loadingToastId.dismiss()
+      toast({
+        title: "Success",
+        description: "Habit created successfully!",
+      })
+    } catch (error) {
+      loadingToastId.dismiss()
+      toast({
+        title: "Error",
+        description: "Failed to create habit. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsCreatingHabit(false)
+    }
+  }, [newHabit, addHabit, toast])
+
+  const handleCheckIn = useCallback(
+    async (habitId: string) => {
+      const loadingToastId = toast({
+        title: "Checking in...",
+        description: "Verifying your progress on the blockchain",
+      })
+
+      try {
+        await checkInHabit(Number.parseInt(habitId))
+        loadingToastId.dismiss()
+        toast({
+          title: "Great job!",
+          description: "Habit checked in successfully",
+        })
+      } catch (error) {
+        loadingToastId.dismiss()
+        toast({
+          title: "Error",
+          description: "Failed to check in. Please try again.",
+          variant: "destructive",
+        })
+      }
+    },
+    [checkInHabit, toast],
+  )
+
+  const getCategoryIcon = useCallback((category: Habit["category"]) => {
     switch (category) {
       case "fitness":
         return <Activity className="w-4 h-4" />
@@ -75,9 +114,9 @@ export default function PersonalZone() {
       default:
         return <Target className="w-4 h-4" />
     }
-  }
+  }, [])
 
-  const getCategoryColor = (category: Habit["category"]) => {
+  const getCategoryColor = useCallback((category: Habit["category"]) => {
     switch (category) {
       case "fitness":
         return "bg-red-500"
@@ -92,6 +131,66 @@ export default function PersonalZone() {
       default:
         return "bg-gray-500"
     }
+  }, [])
+
+  if (isLoadingHabits) {
+    return (
+      <div className="min-h-screen relative" style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}>
+        {/* Top Navigation */}
+        <nav
+          className="fixed top-0 w-full z-50 backdrop-blur-md py-4 border-b"
+          style={{
+            backgroundColor: isDarkMode ? "rgba(26, 26, 26, 0.9)" : "rgba(255, 255, 255, 0.9)",
+            borderColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+            <div className="flex items-center space-x-6">
+              <Link href="/app" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+                <img
+                  src={isDarkMode ? "/logo-dark.svg" : "/logo-light.svg"}
+                  alt="ChainFlow"
+                  className="w-7 h-7 transition-opacity duration-300"
+                />
+                <span className="text-lg font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
+                  ChainFlow
+                </span>
+              </Link>
+              <div
+                className="flex items-center space-x-2 text-sm"
+                style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.6)" : "rgba(107, 114, 128, 1)" }}
+              >
+                <Link href="/app" className="hover:text-[#00FFE5] transition-colors flex items-center">
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Zones
+                </Link>
+                <span>/</span>
+                <span>Personal</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg transition-colors"
+                style={{
+                  backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(26, 26, 26, 0.1)",
+                  color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
+                }}
+              >
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
+        </nav>
+
+        {/* Loading Content */}
+        <div className="pt-20">
+          <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center min-h-[60vh]">
+            <BlockchainLoading message="Fetching your personal habits from the blockchain..." isDarkMode={isDarkMode} />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -129,8 +228,7 @@ export default function PersonalZone() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <WalletConnect isDarkMode={isDarkMode} />
-            <button
+            <Button
               onClick={toggleTheme}
               className="p-2 rounded-lg transition-colors"
               style={{
@@ -139,7 +237,7 @@ export default function PersonalZone() {
               }}
             >
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
+            </Button>
           </div>
         </div>
       </nav>
@@ -232,9 +330,17 @@ export default function PersonalZone() {
                   </div>
                   <Button
                     onClick={handleCreateHabit}
-                    className="w-full bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
+                    disabled={isCreatingHabit}
+                    className="w-full bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90 disabled:opacity-50"
                   >
-                    Create Habit
+                    {isCreatingHabit ? (
+                      <>
+                        <LoadingSpinner size="sm" className="mr-2" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Create Habit"
+                    )}
                   </Button>
                 </div>
               </DialogContent>
@@ -388,17 +494,6 @@ export default function PersonalZone() {
                       >
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Check In
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => deleteHabit(habit.id)}
-                        className="px-3"
-                        style={{
-                          borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(0, 0, 0, 0.2)",
-                          color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
-                        }}
-                      >
-                        ×
                       </Button>
                     </div>
                   </div>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,6 +30,8 @@ import { WalletConnect } from "@/components/wallet-connect"
 import { useAccount } from "wagmi"
 import { useTaskBoard, type Task } from "@/hooks/use-task-board"
 import { useToast } from "@/hooks/use-toast"
+import { BlockchainLoading } from "@/components/blockchain-loading"
+import { LoadingSpinner } from "@/components/loading-spinner"
 
 export default function WorkZone() {
   const { theme, toggleTheme } = useTheme()
@@ -46,8 +48,18 @@ export default function WorkZone() {
     assignee: "",
     reward: "",
   })
+  const [isLoading, setIsLoading] = useState(true)
+  const [isCreatingTask, setIsCreatingTask] = useState(false)
 
-  const stats = getStats()
+  const stats = getStats
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false)
+    }, 2500) // 2.5 second loading simulation
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleCreateTask = () => {
     if (!newTask.title.trim() || !newTask.assignee.trim()) {
@@ -59,16 +71,28 @@ export default function WorkZone() {
       return
     }
 
-    createTask({
-      ...newTask,
-      creator: address || "anonymous",
+    setIsCreatingTask(true)
+
+    const loadingToast = toast({
+      title: "Creating task...",
+      description: "Recording task on the blockchain",
     })
-    setNewTask({ title: "", description: "", assignee: "", reward: "" })
-    setIsCreateDialogOpen(false)
-    toast({
-      title: "Success",
-      description: "Task created successfully!",
-    })
+
+    setTimeout(() => {
+      createTask({
+        ...newTask,
+        creator: address || "anonymous",
+      })
+      setNewTask({ title: "", description: "", assignee: "", reward: "" })
+      setIsCreateDialogOpen(false)
+      setIsCreatingTask(false)
+
+      loadingToast.dismiss()
+      toast({
+        title: "Success",
+        description: "Task created successfully!",
+      })
+    }, 1800)
   }
 
   const handleSubmitTask = (taskId: string) => {
@@ -81,21 +105,37 @@ export default function WorkZone() {
       return
     }
 
-    submitTask(taskId, submissionUrl)
-    setSubmissionUrl("")
-    toast({
-      title: "Success",
-      description: "Task submitted for review!",
+    const loadingToast = toast({
+      title: "Submitting task...",
+      description: "Recording submission on the blockchain",
     })
+
+    setTimeout(() => {
+      submitTask(taskId, submissionUrl)
+      setSubmissionUrl("")
+      loadingToast.dismiss()
+      toast({
+        title: "Success",
+        description: "Task submitted for review!",
+      })
+    }, 1200)
   }
 
   const handleVerifyTask = (taskId: string) => {
-    verifyTask(taskId, verificationNotes)
-    setVerificationNotes("")
-    toast({
-      title: "Success",
-      description: "Task verified successfully!",
+    const loadingToast = toast({
+      title: "Verifying task...",
+      description: "Processing verification on the blockchain",
     })
+
+    setTimeout(() => {
+      verifyTask(taskId, verificationNotes)
+      setVerificationNotes("")
+      loadingToast.dismiss()
+      toast({
+        title: "Success",
+        description: "Task verified successfully!",
+      })
+    }, 1500)
   }
 
   const getStatusColor = (status: Task["status"]) => {
@@ -136,9 +176,66 @@ export default function WorkZone() {
     return tasks.filter((task) => task.status === status)
   }
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen relative" style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}>
+        <nav
+          className="fixed top-0 w-full z-50 backdrop-blur-md py-4 border-b"
+          style={{
+            backgroundColor: isDarkMode ? "rgba(26, 26, 26, 0.9)" : "rgba(255, 255, 255, 0.9)",
+            borderColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+            <div className="flex items-center space-x-6">
+              <Link href="/app" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+                <img
+                  src={isDarkMode ? "/logo-dark.svg" : "/logo-light.svg"}
+                  alt="ChainFlow"
+                  className="w-7 h-7 transition-opacity duration-300"
+                />
+                <span className="text-lg font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
+                  ChainFlow
+                </span>
+              </Link>
+              <div
+                className="flex items-center space-x-2 text-sm"
+                style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.6)" : "rgba(107, 114, 128, 1)" }}
+              >
+                <Link href="/app" className="hover:text-[#00FFE5] transition-colors flex items-center">
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Zones
+                </Link>
+                <span>/</span>
+                <span>Work</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg transition-colors"
+                style={{
+                  backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(26, 26, 26, 0.1)",
+                  color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
+                }}
+              >
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        <div className="pt-20">
+          <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center min-h-[60vh]">
+            <BlockchainLoading message="Fetching your work tasks from the blockchain..." isDarkMode={isDarkMode} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}>
-      {/* Top Navigation */}
       <nav
         className="fixed top-0 w-full z-50 backdrop-blur-md py-4 border-b"
         style={{
@@ -186,10 +283,8 @@ export default function WorkZone() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <div className="pt-20">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
               <h1 className="text-4xl font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
@@ -282,16 +377,23 @@ export default function WorkZone() {
                   </div>
                   <Button
                     onClick={handleCreateTask}
-                    className="w-full bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
+                    disabled={isCreatingTask}
+                    className="w-full bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90 disabled:opacity-50"
                   >
-                    Create Task
+                    {isCreatingTask ? (
+                      <>
+                        <LoadingSpinner size="sm" className="mr-2" />
+                        Creating...
+                      </>
+                    ) : (
+                      "Create Task"
+                    )}
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card
               className="border-2 border-[#00FFE5]/20"
@@ -374,7 +476,6 @@ export default function WorkZone() {
             </Card>
           </div>
 
-          {/* Task Board */}
           <Tabs defaultValue="all" className="w-full">
             <TabsList
               className="grid w-full grid-cols-6"

@@ -8,6 +8,14 @@ import { useEffect, useState } from "react"
 import { useWeb3Modal } from "@web3modal/wagmi/react"
 import { somniaTestnet } from "@/lib/wagmi"
 
+interface WindowWithEthereum extends Window {
+  ethereum?: {
+    request: (args: { method: string }) => Promise<string[]>
+  }
+}
+
+declare const window: WindowWithEthereum
+
 export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) {
   const { address, isConnected, chain } = useAccount()
   const { disconnect } = useDisconnect()
@@ -62,9 +70,8 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
       // Check if WalletConnect is properly configured
       if (!process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) {
         // Fallback to injected wallet if WalletConnect is not configured
-        const { ethereum } = window as any
-        if (ethereum) {
-          await ethereum.request({ method: "eth_requestAccounts" })
+        if (window.ethereum) {
+          await window.ethereum.request({ method: "eth_requestAccounts" })
         } else {
           toast({
             title: "No Wallet Found",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract, useSwitchChain } from "wagmi"
 import { toast } from "@/hooks/use-toast"
 
@@ -307,14 +307,14 @@ export function useHabitTracker() {
     }
   }
 
-  const getStats = () => {
+  const getStats = useMemo(() => {
     const totalHabits = habits.length
     const activeStreaks = habits.filter((h) => h.streak > 0).length
     const totalCheckins = habits.reduce((sum, h) => sum + h.totalCheckins, 0)
     const longestStreak = Math.max(...habits.map((h) => h.streak), 0)
 
     return { totalHabits, activeStreaks, totalCheckins, longestStreak }
-  }
+  }, [habits])
 
   return {
     habits,

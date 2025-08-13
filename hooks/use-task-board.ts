@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSwitchChain, useReadContract } from "wagmi"
 import { toast } from "@/hooks/use-toast" // Using same toast as habit tracker
 
@@ -367,7 +367,7 @@ export function useTaskBoard() {
     }
   }
 
-  const getStats = () => {
+  const getStats = useMemo(() => {
     const totalTasks = tasks.length
     const completedTasks = tasks.filter((t) => t.completed).length
     const pendingTasks = tasks.filter((t) => !t.completed).length
@@ -376,7 +376,7 @@ export function useTaskBoard() {
       .reduce((sum, t) => sum + Number.parseFloat(t.reward || "0"), 0)
 
     return { totalTasks, completedTasks, pendingTasks, totalRewards }
-  }
+  }, [tasks])
 
   return {
     tasks,

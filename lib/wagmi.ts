@@ -50,6 +50,7 @@ export const config = createConfig({
             icons: [`${getAppUrl()}/favicon.ico`],
           },
           showQrModal: true,
+          disableProviderPing: true,
         }),
         injected({
           shimDisconnect: true,
@@ -66,32 +67,73 @@ export const config = createConfig({
   ssr: false,
 })
 
+if (typeof window !== "undefined") {
+  // Suppress Web3Modal analytics errors
+  const originalConsoleError = console.error
+  const originalConsoleWarn = console.warn
+
+  console.error = (...args) => {
+    const message = args.join(" ")
+    if (
+      message.includes("Analytics SDK") ||
+      message.includes("AnalyticsSDKApiError") ||
+      message.includes("analytics") ||
+      message.includes("fetch failed")
+    ) {
+      return // Suppress analytics-related errors
+    }
+    originalConsoleError.apply(console, args)
+  }
+
+  console.warn = (...args) => {
+    const message = args.join(" ")
+    if (
+      message.includes("Analytics SDK") ||
+      message.includes("AnalyticsSDKApiError") ||
+      message.includes("analytics")
+    ) {
+      return // Suppress analytics-related warnings
+    }
+    originalConsoleWarn.apply(console, args)
+  }
+}
+
 if (projectId && typeof window !== "undefined") {
-  createWeb3Modal({
-    wagmiConfig: config,
-    projectId,
-    enableAnalytics: false,
-    enableOnramp: false,
-    themeMode: "dark",
-    themeVariables: {
-      "--w3m-color-mix": "#00FFE5",
-      "--w3m-color-mix-strength": 20,
-      "--w3m-accent": "#00FFE5",
-      "--w3m-border-radius-master": "8px",
-    },
-    metadata: {
-      name: "ChainFlow",
-      description: "Blockchain-powered productivity and habit tracking",
-      url: getAppUrl(),
-      icons: [`${getAppUrl()}/favicon.ico`],
-    },
-    featuredWalletIds: [
-      "c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96", // MetaMask
-      "fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa", // Coinbase
-      "4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0", // Trust Wallet
-      "38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662", // Bitget
-    ],
-  })
+  try {
+    createWeb3Modal({
+      wagmiConfig: config,
+      projectId,
+      enableAnalytics: false, // Keep analytics disabled to prevent SDK errors
+      enableOnramp: false,
+      enableWalletFeatures: false,
+      enableSwaps: false,
+      allowUnsupportedChain: true,
+      themeMode: "dark",
+      themeVariables: {
+        "--w3m-color-mix": "#00FFE5",
+        "--w3m-color-mix-strength": 20,
+        "--w3m-accent": "#00FFE5",
+        "--w3m-border-radius-master": "8px",
+      },
+      metadata: {
+        name: "ChainFlow",
+        description: "Blockchain-powered productivity and habit tracking",
+        url: getAppUrl(),
+        icons: [`${getAppUrl()}/favicon.ico`],
+      },
+      featuredWalletIds: [
+        "c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96", // MetaMask
+        "fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa", // Coinbase
+        "4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0", // Trust Wallet
+        "38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662", // Bitget
+      ],
+    })
+  } catch (error) {
+    const errorMessage = error?.message || ""
+    if (!errorMessage.includes("Analytics") && !errorMessage.includes("analytics")) {
+      console.warn("Web3Modal initialization failed, continuing without modal:", error)
+    }
+  }
 }
 
 export { somniaTestnet }
