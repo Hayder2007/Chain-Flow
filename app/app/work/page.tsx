@@ -36,6 +36,7 @@ import { LoadingSpinner } from "@/components/loading-spinner"
 export default function WorkZone() {
   const { theme, toggleTheme } = useTheme()
   const isDarkMode = theme === "dark"
+  const [mounted, setMounted] = useState(false)
   const { address } = useAccount()
   const { tasks, createTask, updateTaskStatus, submitTask, verifyTask, deleteTask, getStats } = useTaskBoard()
   const { toast } = useToast()
@@ -54,12 +55,29 @@ export default function WorkZone() {
   const stats = getStats
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
+
     const timer = setTimeout(() => {
       setIsLoading(false)
     }, 2500) // 2.5 second loading simulation
 
     return () => clearTimeout(timer)
-  }, [])
+  }, [mounted])
+
+  if (!mounted) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}
+      >
+        <LoadingSpinner size="lg" />
+      </div>
+    )
+  }
 
   const handleCreateTask = () => {
     if (!newTask.title.trim() || !newTask.assignee.trim()) {

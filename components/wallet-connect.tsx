@@ -5,7 +5,6 @@ import { useAccount, useDisconnect, useSwitchChain } from "wagmi"
 import { Wallet, AlertTriangle } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useEffect, useState } from "react"
-import { useWeb3Modal } from "@web3modal/wagmi/react"
 import { somniaTestnet } from "@/lib/wagmi"
 
 interface WindowWithEthereum extends Window {
@@ -20,10 +19,24 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
   const { address, isConnected, chain } = useAccount()
   const { disconnect } = useDisconnect()
   const { switchChain } = useSwitchChain()
-  const { open } = useWeb3Modal()
   const { toast } = useToast()
   const [isWrongNetwork, setIsWrongNetwork] = useState(false)
   const [isConnecting, setIsConnecting] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [web3Modal, setWeb3Modal] = useState<any>(null)
+
+  useEffect(() => {
+    setIsMounted(true)
+    if (typeof window !== "undefined") {
+      import("@web3modal/wagmi/react")
+        .then((module) => {
+          setWeb3Modal(module.useWeb3Modal)
+        })
+        .catch(() => {
+          // Silently fail if Web3Modal is not available
+        })
+    }
+  }, [])
 
   useEffect(() => {
     if (isConnected && chain && chain.id !== somniaTestnet.id) {
@@ -65,12 +78,14 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
   }, [isConnected, address, toast, isWrongNetwork])
 
   const handleConnect = async () => {
+    if (!isMounted) return
+
     setIsConnecting(true)
     try {
       // Check if WalletConnect is properly configured
       if (!process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID) {
         // Fallback to injected wallet if WalletConnect is not configured
-        if (window.ethereum) {
+        if (typeof window !== "undefined" && window.ethereum) {
           await window.ethereum.request({ method: "eth_requestAccounts" })
         } else {
           toast({
@@ -80,7 +95,13 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
           })
         }
       } else {
-        await open()
+        if (web3Modal) {
+          const { open } = web3Modal()
+          await open()
+        } else if (typeof window !== "undefined" && window.ethereum) {
+          // Fallback to direct wallet connection
+          await window.ethereum.request({ method: "eth_requestAccounts" })
+        }
       }
     } catch (err) {
       console.error("Connection error:", err)
@@ -105,6 +126,23 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
         variant: "destructive",
       })
     }
+  }
+
+  if (!isMounted) {
+    return (
+      <Button
+        variant="outline"
+        className="flex items-center px-3 py-2 rounded-lg transition-colors hover:bg-[#00FFE5]/10 bg-transparent"
+        style={{
+          color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
+          borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(0, 0, 0, 0.2)",
+        }}
+        disabled
+      >
+        <Wallet className="w-4 h-4 mr-2" />
+        Loading...
+      </Button>
+    )
   }
 
   if (isConnected && isWrongNetwork) {
