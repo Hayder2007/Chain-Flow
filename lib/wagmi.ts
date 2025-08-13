@@ -1,5 +1,5 @@
 import { createConfig, http } from "wagmi"
-import { walletConnect, injected, coinbaseWallet } from "wagmi/connectors"
+import { injected } from "wagmi/connectors"
 
 const somniaTestnet = {
   id: 50312,
@@ -21,129 +21,15 @@ const somniaTestnet = {
     },
   },
   testnet: true,
-}
-
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
-
-if (!projectId && typeof window !== "undefined") {
-  console.error("NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set")
-}
-
-const getAppUrl = () => {
-  if (typeof window !== "undefined") {
-    return window.location.origin
-  }
-  return "https://chainflow.app" // fallback for SSR
-}
+} as const
 
 export const config = createConfig({
   chains: [somniaTestnet],
-  connectors: projectId
-    ? [
-        walletConnect({
-          projectId,
-          metadata: {
-            name: "ChainFlow",
-            description: "Blockchain-powered productivity and habit tracking",
-            url: getAppUrl(),
-            icons: [`${getAppUrl()}/favicon.ico`],
-          },
-          showQrModal: true,
-          disableProviderPing: true,
-        }),
-        injected({
-          shimDisconnect: true,
-        }),
-        coinbaseWallet({
-          appName: "ChainFlow",
-          appLogoUrl: `${getAppUrl()}/favicon.ico`,
-        }),
-      ]
-    : [injected({ shimDisconnect: true })],
+  connectors: [injected()],
   transports: {
-    [somniaTestnet.id]: http("https://dream-rpc.somnia.network/"),
+    [somniaTestnet.id]: http(),
   },
-  ssr: true, // Enable SSR support in wagmi config
+  ssr: true,
 })
-
-if (typeof window !== "undefined") {
-  // Suppress Web3Modal analytics errors
-  const originalConsoleError = console.error
-  const originalConsoleWarn = console.warn
-
-  console.error = (...args) => {
-    const message = args.join(" ")
-    if (
-      message.includes("Analytics SDK") ||
-      message.includes("AnalyticsSDKApiError") ||
-      message.includes("analytics") ||
-      message.includes("fetch failed") ||
-      message.includes("indexedDB")
-    ) {
-      return // Suppress analytics-related and indexedDB errors
-    }
-    originalConsoleError.apply(console, args)
-  }
-
-  console.warn = (...args) => {
-    const message = args.join(" ")
-    if (
-      message.includes("Analytics SDK") ||
-      message.includes("AnalyticsSDKApiError") ||
-      message.includes("analytics") ||
-      message.includes("indexedDB")
-    ) {
-      return // Suppress analytics-related and indexedDB warnings
-    }
-    originalConsoleWarn.apply(console, args)
-  }
-
-  if (projectId) {
-    // Add a small delay to ensure DOM is ready
-    setTimeout(() => {
-      try {
-        import("@web3modal/wagmi/react")
-          .then((module) => {
-            module.createWeb3Modal({
-              wagmiConfig: config,
-              projectId,
-              enableAnalytics: false,
-              enableOnramp: false,
-              enableWalletFeatures: false,
-              enableSwaps: false,
-              allowUnsupportedChain: true,
-              themeMode: "dark",
-              themeVariables: {
-                "--w3m-color-mix": "#00FFE5",
-                "--w3m-color-mix-strength": 20,
-                "--w3m-accent": "#00FFE5",
-                "--w3m-border-radius-master": "8px",
-              },
-              metadata: {
-                name: "ChainFlow",
-                description: "Blockchain-powered productivity and habit tracking",
-                url: getAppUrl(),
-                icons: [`${getAppUrl()}/favicon.ico`],
-              },
-              featuredWalletIds: [
-                "c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96",
-                "fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa",
-                "4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0",
-                "38f5d18bd8522c244bdd70cb4a68e0e718865155811c043f052fb9f1c51de662",
-              ],
-            })
-          })
-          .catch((error) => {
-            // Silently handle Web3Modal initialization errors
-            if (!error?.message?.includes("Analytics") && !error?.message?.includes("analytics")) {
-              console.warn("Web3Modal initialization failed, continuing without modal:", error)
-            }
-          })
-      } catch (error) {
-        // Silently handle any other initialization errors
-      }
-    }, 100)
-  }
-}
 
 export { somniaTestnet }
