@@ -16,7 +16,6 @@ import {
   CheckCircle,
   Shield,
   Coins,
-  Mail,
 } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
@@ -592,22 +591,22 @@ export default function LandingPage() {
             />
 
             <div className="space-y-12">
-              {/* Phase 1 - Current */}
+              {/* Phase 1 - Completed */}
               <div className="relative flex items-start">
-                <div className="flex-shrink-0 w-16 h-16 bg-[#00FFE5] rounded-full flex items-center justify-center mr-8 relative z-10">
-                  <span className="text-xl font-bold text-[#1A1A1A]">1</span>
+                <div className="flex-shrink-0 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mr-8 relative z-10">
+                  <span className="text-xl font-bold text-white">✓</span>
                 </div>
                 <Card
-                  className="flex-1 border-2 border-[#00FFE5] shadow-lg"
-                  style={{ backgroundColor: isDarkMode ? "rgba(0, 255, 229, 0.05)" : "rgba(0, 255, 229, 0.05)" }}
+                  className="flex-1 border-2 border-green-500/30 shadow-lg"
+                  style={{ backgroundColor: isDarkMode ? "rgba(34, 197, 94, 0.05)" : "rgba(34, 197, 94, 0.05)" }}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-2xl font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
                         Phase 1
                       </h3>
-                      <span className="bg-[#00FFE5] text-[#1A1A1A] px-3 py-1 rounded-full text-sm font-medium">
-                        Current
+                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        Completed
                       </span>
                     </div>
                     <h4 className="text-lg font-semibold mb-3 text-[#00FFE5]">Core Foundation</h4>
@@ -632,58 +631,39 @@ export default function LandingPage() {
                 </Card>
               </div>
 
-              {/* Phase 2 */}
+              {/* Phase 2 - Completed */}
               <div className="relative flex items-start">
-                <div
-                  className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center mr-8 relative z-10 border-2"
-                  style={{
-                    backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(255, 255, 255, 0.9)",
-                    borderColor: isDarkMode ? "rgba(245, 247, 250, 0.3)" : "rgba(107, 114, 128, 0.3)",
-                  }}
-                >
-                  <span className="text-xl font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                    2
-                  </span>
+                <div className="flex-shrink-0 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mr-8 relative z-10">
+                  <span className="text-xl font-bold text-white">✓</span>
                 </div>
                 <Card
-                  className="flex-1 border-2"
-                  style={{
-                    backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white",
-                    borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(107, 114, 128, 0.2)",
-                  }}
+                  className="flex-1 border-2 border-green-500/30 shadow-lg"
+                  style={{ backgroundColor: isDarkMode ? "rgba(34, 197, 94, 0.05)" : "rgba(34, 197, 94, 0.05)" }}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-2xl font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
                         Phase 2
                       </h3>
-                      <span
-                        className="px-3 py-1 rounded-full text-sm font-medium"
-                        style={{
-                          backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(107, 114, 128, 0.1)",
-                          color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)",
-                        }}
-                      >
-                        Coming Soon
+                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        Completed
                       </span>
                     </div>
-                    <h4 className="text-lg font-semibold mb-3" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                      Work MVP
-                    </h4>
+                    <h4 className="text-lg font-semibold mb-3 text-[#00FFE5]">Work MVP</h4>
                     <ul className="space-y-2">
-                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}>
+                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.9)" : "rgba(75, 85, 99, 1)" }}>
                         • Wallet-based contributor assignment
                       </li>
-                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}>
+                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.9)" : "rgba(75, 85, 99, 1)" }}>
                         • Role/permission logic added
                       </li>
-                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}>
+                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.9)" : "rgba(75, 85, 99, 1)" }}>
                         • Task status: Assigned → Submitted → Verified
                       </li>
-                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}>
+                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.9)" : "rgba(75, 85, 99, 1)" }}>
                         • Manual payout setup per task
                       </li>
-                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}>
+                      <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.9)" : "rgba(75, 85, 99, 1)" }}>
                         • Smart contract upgrade for team ops
                       </li>
                     </ul>
@@ -691,33 +671,25 @@ export default function LandingPage() {
                 </Card>
               </div>
 
-              {/* Phase 3 */}
+              {/* Phase 3 - Coming Soon */}
               <div className="relative flex items-start">
-                <div
-                  className="flex-shrink-0 w-16 h-16 rounded-full flex items-center justify-center mr-8 relative z-10 border-2"
-                  style={{
-                    backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(255, 255, 255, 0.9)",
-                    borderColor: isDarkMode ? "rgba(245, 247, 250, 0.3)" : "rgba(107, 114, 128, 0.3)",
-                  }}
-                >
-                  <span className="text-xl font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                    3
-                  </span>
+                <div className="flex-shrink-0 w-16 h-16 bg-[#00FFE5] rounded-full flex items-center justify-center mr-8 relative z-10">
+                  <span className="text-xl font-bold text-[#1A1A1A]">3</span>
                 </div>
                 <Card
-                  className="flex-1 border-2"
-                  style={{
-                    backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white",
-                    borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(107, 114, 128, 0.2)",
-                  }}
+                  className="flex-1 border-2 border-[#00FFE5] shadow-lg"
+                  style={{ backgroundColor: isDarkMode ? "rgba(0, 255, 229, 0.05)" : "rgba(0, 255, 229, 0.05)" }}
                 >
                   <CardContent className="p-6">
-                    <h3 className="text-2xl font-bold mb-4" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                      Phase 3
-                    </h3>
-                    <h4 className="text-lg font-semibold mb-3" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                      Proof Engine (zk/AI)
-                    </h4>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-2xl font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
+                        Phase 3
+                      </h3>
+                      <span className="bg-[#00FFE5] text-[#1A1A1A] px-3 py-1 rounded-full text-sm font-medium">
+                        Coming Soon
+                      </span>
+                    </div>
+                    <h4 className="text-lg font-semibold mb-3 text-[#00FFE5]">Proof Engine (zk/AI)</h4>
                     <ul className="space-y-2">
                       <li style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}>
                         • AI-based check-in + task verification
@@ -837,7 +809,72 @@ export default function LandingPage() {
             >
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <span className="text-2xl">🦊</span>
+                  <svg className="w-12 h-12" viewBox="0 0 318.6 318.6" fill="none">
+                    <path
+                      d="M274.1 35.5l-99.5 73.9L193 65.8z"
+                      fill="#E2761B"
+                      stroke="#E2761B"
+                      strokeWidth="5.94"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m44.4 35.5 98.7 74.6-17.5-44.3z"
+                      fill="#E4761B"
+                      stroke="#E4761B"
+                      strokeWidth="5.94"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m238.3 206.8-26.5 40.6 56.7 15.6 16.3-55.3z"
+                      fill="#E4761B"
+                      stroke="#E4761B"
+                      strokeWidth="5.94"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m33.9 207.7 16.2 55.3 56.7-15.6-26.5-40.6z"
+                      fill="#E4761B"
+                      stroke="#E4761B"
+                      strokeWidth="5.94"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m103.6 138.2-15.8 23.9 56.3 2.5-1.9-60.6z"
+                      fill="#E4761B"
+                      stroke="#E4761B"
+                      strokeWidth="5.94"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m214.9 138.2-39-34.8-1.3 61.2 56.2-2.5z"
+                      fill="#E4761B"
+                      stroke="#E4761B"
+                      strokeWidth="5.94"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m106.8 247.4 33.8-16.5-29.2-22.8z"
+                      fill="#E4761B"
+                      stroke="#E4761B"
+                      strokeWidth="5.94"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="m177.9 230.9 33.9 16.5-4.7-39.3z"
+                      fill="#E4761B"
+                      stroke="#E4761B"
+                      strokeWidth="5.94"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
                   MetaMask
@@ -857,15 +894,12 @@ export default function LandingPage() {
             >
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" fill="#00FFE5" />
-                    <path
-                      d="M8 12l2 2 4-4"
-                      stroke="#1A1A1A"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                  <svg className="w-12 h-12" viewBox="0 0 100 100" fill="none">
+                    <circle cx="50" cy="50" r="45" fill="#00FFE5" stroke="#00FFE5" strokeWidth="2" />
+                    <circle cx="50" cy="50" r="35" fill="none" stroke="#1A1A1A" strokeWidth="3" />
+                    <circle cx="50" cy="50" r="25" fill="none" stroke="#1A1A1A" strokeWidth="2" />
+                    <circle cx="50" cy="50" r="15" fill="none" stroke="#1A1A1A" strokeWidth="2" />
+                    <circle cx="50" cy="50" r="8" fill="#1A1A1A" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
@@ -887,14 +921,16 @@ export default function LandingPage() {
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                   <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M12.158.955l-7.91 4.565a2.285 2.285 0 00-1.135 1.976v9.008c0 .815.436 1.567 1.135 1.976l7.91 4.565a2.285 2.285 0 002.284 0l7.91-4.565a2.285 2.285 0 001.135-1.976V7.496a2.285 2.285 0 00-1.135-1.976L14.442.955a2.285 2.285 0 00-2.284 0z"
-                      fill="#627EEA"
-                    />
+                    <path d="M12 0L5.5 8.5L12 12L18.5 8.5L12 0Z" fill="#627EEA" />
+                    <path d="M12 0L5.5 8.5L12 12V0Z" fill="#8A92B2" />
+                    <path d="M12 16.5L5.5 12.5L12 24L18.5 12.5L12 16.5Z" fill="#627EEA" />
+                    <path d="M12 24V16.5L5.5 12.5L12 24Z" fill="#8A92B2" />
+                    <path d="M12 12L18.5 8.5L12 4.5V12Z" fill="#8A92B2" />
+                    <path d="M5.5 8.5L12 12V4.5L5.5 8.5Z" fill="#627EEA" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                  ⚡ Solidity
+                  Solidity
                 </h3>
                 <p
                   className="text-sm"
@@ -911,11 +947,10 @@ export default function LandingPage() {
             >
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
+                  <svg className="w-12 h-12" viewBox="0 0 24 24" fill="currentColor">
                     <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0189 1.3332-.9555 2.4189-2.1568 2.4189Z"
+                      d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"
+                      fill={isDarkMode ? "#F5F7FA" : "#1A1A1A"}
                     />
                   </svg>
                 </div>
@@ -941,7 +976,7 @@ export default function LandingPage() {
       />
 
       {/* Footer */}
-      <footer className="py-12 px-6 bg-black text-white">
+      <footer className="px-6 bg-black text-white py-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start">
             {/* Left side - Our Socials */}
@@ -965,7 +1000,7 @@ export default function LandingPage() {
                   className="hover:opacity-80 transition-opacity"
                 >
                   <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0189 1.3332-.9555 2.4189-2.1568 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419-.0189 1.3332-.9555 2.4189-2.1568 2.4189Z" />
+                    <path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515.074.074 0 00-.079.037c-.21.375-.445.865-.608 1.25-1.845-.276-3.68-.276-5.487 0-.164-.393-.406-.874-.618-1.25a.077.077 0 00-.078-.037 19.736 19.736 0 00-4.885 1.515.07.07 0 00-.032.028C.533 9.046-.319 13.58.099 18.058a.082.082 0 00.031.056c2.053 1.508 4.041 2.423 5.993 3.029a.078.078 0 00.084-.028c.462-.63.873-1.295 1.226-1.994a.076.076 0 00-.042-.106 12.299 12.299 0 01-1.872-.892.077.077 0 01-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 01.078-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 01.079.009c.12.1.246.198.373.292a.077.077 0 01-.007.128 12.299 12.299 0 01-1.873.891.077.077 0 00-.041.107c.36.698.772 1.363 1.225 1.993a.076.076 0 00.084.029c1.961-.607 3.95-1.522 6.002-3.029a.077.077 0 00.031-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 00-.031-.029zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.211 0 2.176 1.095 2.157 2.419-.019 1.333-.956 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.095 2.157 2.419-.019 1.333-.956 2.419-2.157 2.419z" />
                   </svg>
                 </a>
                 <a
@@ -975,39 +1010,35 @@ export default function LandingPage() {
                   className="hover:opacity-80 transition-opacity"
                 >
                   <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
                   </svg>
                 </a>
               </div>
             </div>
 
-            {/* Right side - Newsletter */}
-            <div className="w-full md:w-auto">
-              <h3 className="text-xl font-bold mb-4 text-white">Stay Updated</h3>
-              <div className="flex flex-col sm:flex-row gap-3 max-w-md">
-                <div className="flex-1 relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#00FFE5] transition-colors"
-                  />
-                </div>
-                <Button className="bg-[#00FFE5] text-black hover:bg-[#00FFE5]/90 font-semibold px-6 py-3 whitespace-nowrap">
+            {/* Right side - Newsletter Subscription */}
+            <div className="text-right">
+              <h3 className="text-xl font-bold text-white text-center tNewsletter mt-0 mb-2.5">Newsletter</h3>
+              <form action="https://formspree.io/f/mwpqgekd" method="POST" className="flex flex-col space-y-3">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter your email"
+                  required
+                  className="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 font-medium"
+                >
                   Subscribe
-                </Button>
-              </div>
-              <p className="text-sm text-gray-400 mt-2">Get updates on new features and releases</p>
+                </button>
+              </form>
             </div>
           </div>
 
-          {/* Bottom section */}
-          <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <img src="/logo-dark.svg" alt="ChainFlow" className="w-6 h-6" />
-              <span className="text-lg font-bold text-white">ChainFlow</span>
-            </div>
-            <p className="text-gray-400 text-sm">© 2024 ChainFlow. Built on Somnia. All rights reserved.</p>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p className="text-gray-400 text-sm">© 2025 ChainFlow. All rights reserved. | Built on Somnia By Hayder.</p>
           </div>
         </div>
       </footer>

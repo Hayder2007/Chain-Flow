@@ -1,8 +1,16 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSwitchChain, useReadContract } from "wagmi"
-import { toast } from "@/hooks/use-toast" // Using same toast as habit tracker
+import {
+  useAccount,
+  useWaitForTransactionReceipt,
+  useSwitchChain,
+  useReadContract,
+  useWatchContractEvent,
+  usePublicClient,
+  useWalletClient,
+} from "wagmi"
+import { toast } from "@/hooks/use-toast"
 
 export interface Task {
   id: number
@@ -11,48 +19,65 @@ export interface Task {
   assignee: string
   creator: string
   reward: string
-  completed: boolean
+  status: "assigned" | "doneByAssignee" | "confirmedByCreator"
+  submissionUrl?: string
+  verificationNotes?: string
 }
 
-const WORK_CONTRACT_ADDRESS = "0xbffddeb4ae3ad53df99a556324245de7c0001ca4" as const
+const WORK_CONTRACT_ADDRESS = "0x29b0A9093D27C7a846ab5beD9378b04607049297" as const
 const SOMNIA_TESTNET_CHAIN_ID = 50312
 
 const WORK_CONTRACT_ABI = [
   {
+    anonymous: false,
     inputs: [
-      {
-        internalType: "uint256",
-        name: "_taskId",
-        type: "uint256",
-      },
+      { indexed: true, internalType: "uint256", name: "taskId", type: "uint256" },
+      { indexed: true, internalType: "address", name: "creator", type: "address" },
     ],
-    name: "completeTask",
+    name: "TaskConfirmedByCreator",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "taskId", type: "uint256" },
+      { indexed: true, internalType: "address", name: "creator", type: "address" },
+      { indexed: true, internalType: "address", name: "assignee", type: "address" },
+      { indexed: false, internalType: "string", name: "title", type: "string" },
+      { indexed: false, internalType: "string", name: "reward", type: "string" },
+    ],
+    name: "TaskCreated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "taskId", type: "uint256" },
+      { indexed: true, internalType: "address", name: "assignee", type: "address" },
+    ],
+    name: "TaskDoneByAssignee",
+    type: "event",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_taskId", type: "uint256" }],
+    name: "completeTaskByAssignee",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_taskId", type: "uint256" }],
+    name: "confirmTaskByCreator",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [
-      {
-        internalType: "string",
-        name: "_title",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "_description",
-        type: "string",
-      },
-      {
-        internalType: "address",
-        name: "_assignee",
-        type: "address",
-      },
-      {
-        internalType: "string",
-        name: "_reward",
-        type: "string",
-      },
+      { internalType: "string", name: "_title", type: "string" },
+      { internalType: "string", name: "_description", type: "string" },
+      { internalType: "address", name: "_assignee", type: "address" },
+      { internalType: "string", name: "_reward", type: "string" },
     ],
     name: "createTask",
     outputs: [],
@@ -60,45 +85,15 @@ const WORK_CONTRACT_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_taskId",
-        type: "uint256",
-      },
-    ],
+    inputs: [{ internalType: "uint256", name: "_taskId", type: "uint256" }],
     name: "getTask",
     outputs: [
-      {
-        internalType: "string",
-        name: "title",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "description",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "reward",
-        type: "string",
-      },
-      {
-        internalType: "address",
-        name: "assignee",
-        type: "address",
-      },
-      {
-        internalType: "bool",
-        name: "completed",
-        type: "bool",
-      },
-      {
-        internalType: "address",
-        name: "creator",
-        type: "address",
-      },
+      { internalType: "string", name: "title", type: "string" },
+      { internalType: "string", name: "description", type: "string" },
+      { internalType: "string", name: "reward", type: "string" },
+      { internalType: "address", name: "assignee", type: "address" },
+      { internalType: "address", name: "creator", type: "address" },
+      { internalType: "uint8", name: "status", type: "uint8" },
     ],
     stateMutability: "view",
     type: "function",
@@ -106,13 +101,7 @@ const WORK_CONTRACT_ABI = [
   {
     inputs: [],
     name: "getTasksCount",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
@@ -121,15 +110,18 @@ const WORK_CONTRACT_ABI = [
 export function useTaskBoard() {
   const { address, chainId } = useAccount()
   const { switchChain } = useSwitchChain()
+  const publicClient = usePublicClient()
+  const { data: walletClient } = useWalletClient()
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [isCreatingTask, setIsCreatingTask] = useState(false) // Added specific loading states
+  const [isCreatingTask, setIsCreatingTask] = useState(false)
   const [isCompletingTask, setIsCompletingTask] = useState(false)
+  const [isConfirmingTask, setIsConfirmingTask] = useState(false)
   const [transactionError, setTransactionError] = useState<string | null>(null)
+  const [currentTxHash, setCurrentTxHash] = useState<`0x${string}` | undefined>()
 
-  const { writeContract, data: hash, isPending, error } = useWriteContract()
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
-    hash,
+  const { isLoading: isConfirmingReceipt, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash: currentTxHash,
   })
 
   const { data: tasksCount, refetch: refetchTasksCount } = useReadContract({
@@ -139,13 +131,55 @@ export function useTaskBoard() {
     chainId: SOMNIA_TESTNET_CHAIN_ID,
   })
 
+  useWatchContractEvent({
+    address: WORK_CONTRACT_ADDRESS,
+    abi: WORK_CONTRACT_ABI,
+    eventName: "TaskCreated",
+    onLogs(logs) {
+      console.log("[v0] TaskCreated event:", logs)
+      refreshTasksData()
+    },
+  })
+
+  useWatchContractEvent({
+    address: WORK_CONTRACT_ADDRESS,
+    abi: WORK_CONTRACT_ABI,
+    eventName: "TaskDoneByAssignee",
+    onLogs(logs) {
+      console.log("[v0] TaskDoneByAssignee event:", logs)
+      refreshTasksData()
+    },
+  })
+
+  useWatchContractEvent({
+    address: WORK_CONTRACT_ADDRESS,
+    abi: WORK_CONTRACT_ABI,
+    eventName: "TaskConfirmedByCreator",
+    onLogs(logs) {
+      console.log("[v0] TaskConfirmedByCreator event:", logs)
+      refreshTasksData()
+    },
+  })
+
+  const mapStatusFromContract = (statusNumber: number): Task["status"] => {
+    switch (statusNumber) {
+      case 0:
+        return "assigned"
+      case 1:
+        return "doneByAssignee"
+      case 2:
+        return "confirmedByCreator"
+      default:
+        return "assigned"
+    }
+  }
+
   const refreshTasksData = async () => {
     if (!address) return
 
     setIsLoading(true)
 
     try {
-      // Force refetch the tasks count first
       const { data: freshTasksCount } = await refetchTasksCount()
       const count = Number(freshTasksCount || 0)
 
@@ -157,7 +191,6 @@ export function useTaskBoard() {
 
       const loadedTasks: Task[] = []
 
-      // Load each task from blockchain
       for (let i = 0; i < count; i++) {
         try {
           const taskData = await fetch(`/api/task/${i}`, {
@@ -172,7 +205,7 @@ export function useTaskBoard() {
               assignee: taskData.assignee,
               creator: taskData.creator,
               reward: taskData.reward,
-              completed: taskData.completed,
+              status: mapStatusFromContract(taskData.status),
             })
           }
         } catch (error) {
@@ -180,7 +213,12 @@ export function useTaskBoard() {
         }
       }
 
-      setTasks(loadedTasks)
+      const userTasks = loadedTasks.filter(
+        (task) =>
+          task.creator.toLowerCase() === address.toLowerCase() || task.assignee.toLowerCase() === address.toLowerCase(),
+      )
+
+      setTasks(userTasks)
     } catch (error) {
       console.error("Error refreshing tasks from blockchain:", error)
       toast({
@@ -193,82 +231,28 @@ export function useTaskBoard() {
     }
   }
 
-  const loadTasksFromBlockchain = async () => {
-    if (!address) {
-      setTasks([])
-      return
-    }
-
-    setIsLoading(true)
-
-    try {
-      const count = Number(tasksCount || 0)
-
-      if (count === 0) {
-        setTasks([])
-        setIsLoading(false)
-        return
-      }
-
-      const loadedTasks: Task[] = []
-
-      for (let i = 0; i < count; i++) {
-        try {
-          const taskData = await fetch(`/api/task/${i}`, {
-            method: "GET",
-          }).then((res) => res.json())
-
-          if (taskData && taskData.title) {
-            loadedTasks.push({
-              id: i,
-              title: taskData.title,
-              description: taskData.description,
-              assignee: taskData.assignee,
-              creator: taskData.creator,
-              reward: taskData.reward,
-              completed: taskData.completed,
-            })
-          }
-        } catch (error) {
-          console.error(`Error loading task ${i}:`, error)
-        }
-      }
-
-      setTasks(loadedTasks)
-    } catch (error) {
-      console.error("Error loading tasks from blockchain:", error)
-      toast({
-        title: "Error Loading Tasks",
-        description: "Failed to load tasks from blockchain. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   useEffect(() => {
     if (address && tasksCount !== undefined) {
-      loadTasksFromBlockchain()
+      refreshTasksData()
     }
   }, [tasksCount, address])
 
   useEffect(() => {
-    if (isConfirmed && hash) {
+    if (isConfirmed && currentTxHash) {
       setIsCreatingTask(false)
       setIsCompletingTask(false)
+      setIsConfirmingTask(false)
 
-      toast({
-        title: "Transaction Confirmed",
-        description: "Your transaction has been confirmed on the blockchain!",
-      })
-
-      // Immediately refresh data from blockchain
       setTimeout(() => {
-        refreshTasksData()
-      }, 1000) // Small delay to ensure blockchain state is updated
+        refreshTasksData().then(() => {
+          toast({
+            title: "Success",
+            description: "Transaction confirmed and data updated successfully!",
+          })
+        })
+      }, 1000)
     }
-  }, [isConfirmed, hash])
+  }, [isConfirmed, currentTxHash])
 
   const ensureCorrectNetwork = async () => {
     if (chainId !== SOMNIA_TESTNET_CHAIN_ID) {
@@ -287,106 +271,153 @@ export function useTaskBoard() {
     return true
   }
 
-  const createTask = async (taskData: { title: string; description: string; assignee: string; reward: string }) => {
-    if (!address) {
+  const executeTransaction = async (functionName: string, args: any[], setLoadingState: (loading: boolean) => void) => {
+    if (!address || !walletClient || !publicClient) {
       toast({
         title: "Wallet Required",
-        description: "Please connect your wallet to create tasks.",
+        description: "Please connect your wallet to perform this action.",
         variant: "destructive",
       })
-      return
+      return false
     }
 
     const networkOk = await ensureCorrectNetwork()
-    if (!networkOk) return
+    if (!networkOk) return false
 
-    setIsCreatingTask(true)
+    setLoadingState(true)
     setTransactionError(null)
 
     try {
-      writeContract({
-        address: WORK_CONTRACT_ADDRESS,
-        abi: WORK_CONTRACT_ABI,
-        functionName: "createTask",
-        args: [taskData.title, taskData.description, taskData.assignee as `0x${string}`, taskData.reward],
-        chainId: SOMNIA_TESTNET_CHAIN_ID,
+      // Get current nonce
+      const nonce = await publicClient.getTransactionCount({
+        address: address,
+        blockTag: "pending",
       })
 
-      toast({
-        title: "Transaction Pending",
-        description: "Please sign the transaction to create your task...",
+      // Estimate gas for the transaction
+      const gasEstimate = await publicClient.estimateContractGas({
+        address: WORK_CONTRACT_ADDRESS,
+        abi: WORK_CONTRACT_ABI,
+        functionName: functionName as any,
+        args: args,
+        account: address,
       })
+
+      // Apply 1.5x buffer to gas estimate
+      const gasLimit = (gasEstimate * 15n) / 10n
+
+      // Get current gas price
+      const gasPrice = await publicClient.getGasPrice()
+
+      console.log(`[v0] Transaction params - Function: ${functionName}, Gas: ${gasLimit}, Nonce: ${nonce}`)
+
+      // Execute transaction with proper parameters
+      const hash = await walletClient.writeContract({
+        address: WORK_CONTRACT_ADDRESS,
+        abi: WORK_CONTRACT_ABI,
+        functionName: functionName as any,
+        args: args,
+        gas: gasLimit,
+        gasPrice: gasPrice,
+        nonce: nonce,
+        chain: walletClient.chain,
+      })
+
+      setCurrentTxHash(hash)
+
+      toast({
+        title: "Transaction Submitted",
+        description: "Transaction submitted to blockchain. Waiting for confirmation...",
+      })
+
+      return true
     } catch (err: any) {
-      setTransactionError(err.message || "Failed to create task")
+      console.error(`[v0] Transaction failed for ${functionName}:`, err)
+
+      let errorMessage = "Transaction failed"
+      if (err.message?.includes("insufficient funds")) {
+        errorMessage = "Insufficient funds for gas fees"
+      } else if (err.message?.includes("nonce")) {
+        errorMessage = "Nonce error - please try again"
+      } else if (err.message?.includes("gas")) {
+        errorMessage = "Gas estimation failed - please try again"
+      } else if (err.shortMessage) {
+        errorMessage = err.shortMessage
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+
+      setTransactionError(errorMessage)
       toast({
         title: "Transaction Failed",
-        description: err.message || "Failed to create task on blockchain",
+        description: errorMessage,
         variant: "destructive",
       })
-      setIsCreatingTask(false)
+      setLoadingState(false)
+      return false
     }
   }
 
-  const completeTask = async (taskId: number) => {
-    if (!address) {
+  const createTask = async (taskData: { title: string; description: string; assignee: string; reward: string }) => {
+    const success = await executeTransaction(
+      "createTask",
+      [taskData.title, taskData.description, taskData.assignee as `0x${string}`, taskData.reward],
+      setIsCreatingTask,
+    )
+
+    if (success) {
       toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to complete tasks.",
-        variant: "destructive",
+        title: "Creating Task...",
+        description: "Task creation transaction submitted successfully.",
       })
-      return
     }
+  }
 
-    const networkOk = await ensureCorrectNetwork()
-    if (!networkOk) return
+  const completeTaskByAssignee = async (taskId: number) => {
+    const success = await executeTransaction("completeTaskByAssignee", [BigInt(taskId)], setIsCompletingTask)
 
-    setIsCompletingTask(true)
-    setTransactionError(null)
-
-    try {
-      writeContract({
-        address: WORK_CONTRACT_ADDRESS,
-        abi: WORK_CONTRACT_ABI,
-        functionName: "completeTask",
-        args: [BigInt(taskId)],
-        chainId: SOMNIA_TESTNET_CHAIN_ID,
-      })
-
+    if (success) {
       toast({
-        title: "Transaction Pending",
-        description: "Please sign the transaction to complete the task...",
+        title: "Marking Task Complete...",
+        description: "Task completion transaction submitted successfully.",
       })
-    } catch (err: any) {
-      setTransactionError(err.message || "Failed to complete task")
+    }
+  }
+
+  const confirmTaskByCreator = async (taskId: number) => {
+    const success = await executeTransaction("confirmTaskByCreator", [BigInt(taskId)], setIsConfirmingTask)
+
+    if (success) {
       toast({
-        title: "Transaction Failed",
-        description: err.message || "Failed to complete task on blockchain",
-        variant: "destructive",
+        title: "Confirming Task...",
+        description: "Task confirmation transaction submitted successfully.",
       })
-      setIsCompletingTask(false)
     }
   }
 
   const getStats = useMemo(() => {
     const totalTasks = tasks.length
-    const completedTasks = tasks.filter((t) => t.completed).length
-    const pendingTasks = tasks.filter((t) => !t.completed).length
+    const completedTasks = tasks.filter((t) => t.status === "confirmedByCreator").length
+    const pendingTasks = tasks.filter((t) => t.status === "doneByAssignee").length
+    const assignedTasks = tasks.filter((t) => t.status === "assigned").length
     const totalRewards = tasks
-      .filter((t) => t.completed)
+      .filter((t) => t.status === "confirmedByCreator")
       .reduce((sum, t) => sum + Number.parseFloat(t.reward || "0"), 0)
 
-    return { totalTasks, completedTasks, pendingTasks, totalRewards }
+    return { totalTasks, completedTasks, pendingTasks, assignedTasks, totalRewards }
   }, [tasks])
 
   return {
     tasks,
     createTask,
-    completeTask,
+    completeTaskByAssignee,
+    confirmTaskByCreator,
     getStats,
     isLoading: isLoading,
-    isCreatingTask: isCreatingTask || isPending || isConfirming,
-    isCompletingTask: isCompletingTask || isPending || isConfirming,
+    isCreatingTask: isCreatingTask || isConfirmingReceipt,
+    isCompletingTask: isCompletingTask || isConfirmingReceipt,
+    isConfirmingTask: isConfirmingTask || isConfirmingReceipt,
     transactionError,
-    refreshTasks: refreshTasksData, // Expose manual refresh function
+    refreshTasks: refreshTasksData,
   }
 }

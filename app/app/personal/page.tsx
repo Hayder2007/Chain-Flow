@@ -57,10 +57,12 @@ export default function PersonalZone() {
       setNewHabit({ name: "", description: "", category: "fitness" })
       setIsCreateDialogOpen(false)
       loadingToastId.dismiss()
-      toast({
-        title: "Success",
-        description: "Habit created successfully!",
-      })
+      setTimeout(() => {
+        toast({
+          title: "Success",
+          description: "Habit created successfully!",
+        })
+      }, 500)
     } catch (error) {
       loadingToastId.dismiss()
       toast({
@@ -83,10 +85,12 @@ export default function PersonalZone() {
       try {
         await checkInHabit(Number.parseInt(habitId))
         loadingToastId.dismiss()
-        toast({
-          title: "Great job!",
-          description: "Habit checked in successfully",
-        })
+        setTimeout(() => {
+          toast({
+            title: "Great job!",
+            description: "Habit checked in successfully",
+          })
+        }, 500)
       } catch (error) {
         loadingToastId.dismiss()
         toast({

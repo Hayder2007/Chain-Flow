@@ -38,7 +38,7 @@ export default function WorkZone() {
   const isDarkMode = theme === "dark"
   const [mounted, setMounted] = useState(false)
   const { address } = useAccount()
-  const { tasks, createTask, updateTaskStatus, submitTask, verifyTask, deleteTask, getStats } = useTaskBoard()
+  const { tasks, createTask, completeTaskByAssignee, confirmTaskByCreator, getStats } = useTaskBoard()
   const { toast } = useToast()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [submissionUrl, setSubmissionUrl] = useState("")
@@ -113,61 +113,46 @@ export default function WorkZone() {
     }, 1800)
   }
 
-  const handleSubmitTask = (taskId: string) => {
-    if (!submissionUrl.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide a submission URL",
-        variant: "destructive",
-      })
-      return
-    }
-
+  const handleMarkDone = (taskId: string) => {
     const loadingToast = toast({
-      title: "Submitting task...",
-      description: "Recording submission on the blockchain",
+      title: "Marking task done...",
+      description: "Recording completion on the blockchain",
     })
 
     setTimeout(() => {
-      submitTask(taskId, submissionUrl)
-      setSubmissionUrl("")
+      completeTaskByAssignee(Number(taskId))
       loadingToast.dismiss()
       toast({
         title: "Success",
-        description: "Task submitted for review!",
+        description: "Task marked as done!",
       })
     }, 1200)
   }
 
-  const handleVerifyTask = (taskId: string) => {
+  const handleConfirmDone = (taskId: string) => {
     const loadingToast = toast({
-      title: "Verifying task...",
-      description: "Processing verification on the blockchain",
+      title: "Confirming task...",
+      description: "Processing confirmation on the blockchain",
     })
 
     setTimeout(() => {
-      verifyTask(taskId, verificationNotes)
-      setVerificationNotes("")
+      confirmTaskByCreator(Number(taskId))
       loadingToast.dismiss()
       toast({
         title: "Success",
-        description: "Task verified successfully!",
+        description: "Task confirmed successfully!",
       })
     }, 1500)
   }
 
   const getStatusColor = (status: Task["status"]) => {
     switch (status) {
-      case "open":
-        return "bg-blue-500"
       case "assigned":
         return "bg-yellow-500"
-      case "submitted":
+      case "doneByAssignee":
         return "bg-purple-500"
-      case "verified":
+      case "confirmedByCreator":
         return "bg-green-500"
-      case "paid":
-        return "bg-emerald-500"
       default:
         return "bg-gray-500"
     }
@@ -175,16 +160,12 @@ export default function WorkZone() {
 
   const getStatusIcon = (status: Task["status"]) => {
     switch (status) {
-      case "open":
-        return <FileText className="w-4 h-4" />
       case "assigned":
         return <Users className="w-4 h-4" />
-      case "submitted":
+      case "doneByAssignee":
         return <Send className="w-4 h-4" />
-      case "verified":
+      case "confirmedByCreator":
         return <Verified className="w-4 h-4" />
-      case "paid":
-        return <DollarSign className="w-4 h-4" />
       default:
         return <Clock className="w-4 h-4" />
     }
@@ -496,15 +477,13 @@ export default function WorkZone() {
 
           <Tabs defaultValue="all" className="w-full">
             <TabsList
-              className="grid w-full grid-cols-6"
+              className="grid w-full grid-cols-4"
               style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
             >
               <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="open">Open</TabsTrigger>
               <TabsTrigger value="assigned">Assigned</TabsTrigger>
-              <TabsTrigger value="submitted">Submitted</TabsTrigger>
-              <TabsTrigger value="verified">Verified</TabsTrigger>
-              <TabsTrigger value="paid">Paid</TabsTrigger>
+              <TabsTrigger value="doneByAssignee">Done</TabsTrigger>
+              <TabsTrigger value="confirmedByCreator">Confirmed</TabsTrigger>
             </TabsList>
 
             <TabsContent value="all" className="mt-6">
@@ -515,21 +494,16 @@ export default function WorkZone() {
                     task={task}
                     isDarkMode={isDarkMode}
                     address={address}
-                    onSubmit={handleSubmitTask}
-                    onVerify={handleVerifyTask}
-                    onDelete={deleteTask}
+                    onMarkDone={handleMarkDone}
+                    onConfirmDone={handleConfirmDone}
                     getStatusColor={getStatusColor}
                     getStatusIcon={getStatusIcon}
-                    submissionUrl={submissionUrl}
-                    setSubmissionUrl={setSubmissionUrl}
-                    verificationNotes={verificationNotes}
-                    setVerificationNotes={setVerificationNotes}
                   />
                 ))}
               </div>
             </TabsContent>
 
-            {["open", "assigned", "submitted", "verified", "paid"].map((status) => (
+            {["assigned", "doneByAssignee", "confirmedByCreator"].map((status) => (
               <TabsContent key={status} value={status} className="mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {filterTasksByStatus(status as Task["status"]).map((task) => (
@@ -538,15 +512,10 @@ export default function WorkZone() {
                       task={task}
                       isDarkMode={isDarkMode}
                       address={address}
-                      onSubmit={handleSubmitTask}
-                      onVerify={handleVerifyTask}
-                      onDelete={deleteTask}
+                      onMarkDone={handleMarkDone}
+                      onConfirmDone={handleConfirmDone}
                       getStatusColor={getStatusColor}
                       getStatusIcon={getStatusIcon}
-                      submissionUrl={submissionUrl}
-                      setSubmissionUrl={setSubmissionUrl}
-                      verificationNotes={verificationNotes}
-                      setVerificationNotes={setVerificationNotes}
                     />
                   ))}
                 </div>
@@ -588,32 +557,19 @@ function TaskCard({
   task,
   isDarkMode,
   address,
-  onSubmit,
-  onVerify,
-  onDelete,
+  onMarkDone,
+  onConfirmDone,
   getStatusColor,
   getStatusIcon,
-  submissionUrl,
-  setSubmissionUrl,
-  verificationNotes,
-  setVerificationNotes,
 }: {
   task: Task
   isDarkMode: boolean
   address: string | undefined
-  onSubmit: (taskId: string) => void
-  onVerify: (taskId: string) => void
-  onDelete: (taskId: string) => void
+  onMarkDone: (taskId: string) => void
+  onConfirmDone: (taskId: string) => void
   getStatusColor: (status: Task["status"]) => string
   getStatusIcon: (status: Task["status"]) => React.ReactNode
-  submissionUrl: string
-  setSubmissionUrl: (url: string) => void
-  verificationNotes: string
-  setVerificationNotes: (notes: string) => void
 }) {
-  const [showSubmissionInput, setShowSubmissionInput] = useState(false)
-  const [showVerificationInput, setShowVerificationInput] = useState(false)
-
   return (
     <Card
       className="border-2 border-[#00FFE5]/20 hover:border-[#00FFE5]/40 transition-all duration-300"
@@ -626,7 +582,13 @@ function TaskCard({
           </CardTitle>
           <Badge className={`${getStatusColor(task.status)} text-white flex items-center space-x-1`}>
             {getStatusIcon(task.status)}
-            <span className="capitalize">{task.status}</span>
+            <span className="capitalize">
+              {task.status === "doneByAssignee"
+                ? "Done"
+                : task.status === "confirmedByCreator"
+                  ? "Confirmed"
+                  : "Assigned"}
+            </span>
           </Badge>
         </div>
       </CardHeader>
@@ -651,6 +613,18 @@ function TaskCard({
             </span>
           </div>
 
+          <div className="flex items-center justify-between">
+            <span
+              className="text-sm font-medium"
+              style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
+            >
+              Creator
+            </span>
+            <span className="text-sm font-mono text-[#00FFE5]">
+              {task.creator.slice(0, 6)}...{task.creator.slice(-4)}
+            </span>
+          </div>
+
           {task.reward && (
             <div className="flex items-center justify-between">
               <span
@@ -664,145 +638,34 @@ function TaskCard({
           )}
         </div>
 
-        {task.submissionUrl && (
-          <div className="mb-4">
-            <p
-              className="text-sm font-medium mb-1"
-              style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
-            >
-              Submission
-            </p>
-            <a
-              href={task.submissionUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-[#00FFE5] hover:underline break-all"
-            >
-              {task.submissionUrl}
-            </a>
-          </div>
-        )}
-
-        {task.verificationNotes && (
-          <div className="mb-4">
-            <p
-              className="text-sm font-medium mb-1"
-              style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
-            >
-              Verification Notes
-            </p>
-            <p
-              className="text-sm"
-              style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
-            >
-              {task.verificationNotes}
-            </p>
-          </div>
-        )}
-
         <div className="space-y-2">
-          {task.status === "assigned" && address === task.assignee && (
-            <>
-              {!showSubmissionInput ? (
-                <Button
-                  onClick={() => setShowSubmissionInput(true)}
-                  className="w-full bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
-                >
-                  <Send className="w-4 h-4 mr-2" />
-                  Submit Work
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <Input
-                    value={submissionUrl}
-                    onChange={(e) => setSubmissionUrl(e.target.value)}
-                    placeholder="Submission URL (GitHub, Drive, etc.)"
-                    style={{
-                      backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white",
-                      borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(0, 0, 0, 0.2)",
-                      color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
-                    }}
-                  />
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={() => onSubmit(task.id)}
-                      className="flex-1 bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
-                    >
-                      Submit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowSubmissionInput(false)}
-                      style={{
-                        borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(0, 0, 0, 0.2)",
-                        color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {task.status === "submitted" && address === task.creator && (
-            <>
-              {!showVerificationInput ? (
-                <Button
-                  onClick={() => setShowVerificationInput(true)}
-                  className="w-full bg-green-500 text-white hover:bg-green-600"
-                >
-                  <Verified className="w-4 h-4 mr-2" />
-                  Verify & Approve
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  <Textarea
-                    value={verificationNotes}
-                    onChange={(e) => setVerificationNotes(e.target.value)}
-                    placeholder="Verification notes (optional)"
-                    style={{
-                      backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white",
-                      borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(0, 0, 0, 0.2)",
-                      color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
-                    }}
-                  />
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={() => onVerify(task.id)}
-                      className="flex-1 bg-green-500 text-white hover:bg-green-600"
-                    >
-                      Verify
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowVerificationInput(false)}
-                      style={{
-                        borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(0, 0, 0, 0.2)",
-                        color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {address === task.creator && (
+          {/* Assignee can mark task as done */}
+          {task.status === "assigned" && address?.toLowerCase() === task.assignee.toLowerCase() && (
             <Button
-              variant="outline"
-              onClick={() => onDelete(task.id)}
-              className="w-full"
-              style={{
-                borderColor: "rgba(239, 68, 68, 0.5)",
-                color: "rgb(239, 68, 68)",
-              }}
+              onClick={() => onMarkDone(task.id.toString())}
+              className="w-full bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
             >
-              Delete Task
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Mark Done
             </Button>
+          )}
+
+          {/* Creator can confirm task completion */}
+          {task.status === "doneByAssignee" && address?.toLowerCase() === task.creator.toLowerCase() && (
+            <Button
+              onClick={() => onConfirmDone(task.id.toString())}
+              className="w-full bg-green-500 text-white hover:bg-green-600"
+            >
+              <Verified className="w-4 h-4 mr-2" />
+              Confirm Done
+            </Button>
+          )}
+
+          {/* Show status for completed tasks */}
+          {task.status === "confirmedByCreator" && (
+            <div className="text-center py-2">
+              <span className="text-green-500 font-medium">✓ Task Completed & Confirmed</span>
+            </div>
           )}
         </div>
       </CardContent>

@@ -68,6 +68,36 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
     setIsOpen(false)
   }
 
+  const handleDisconnect = () => {
+    disconnect()
+    toast({
+      title: "Wallet Disconnected",
+      description: "Your wallet has been disconnected",
+    })
+    setIsOpen(false)
+  }
+
+  const handleNetworkSwitch = () => {
+    switchChain(
+      { chainId: somniaTestnet.id },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Network Switched",
+            description: "Successfully switched to Somnia Testnet",
+          })
+        },
+        onError: (error) => {
+          toast({
+            title: "Switch Failed",
+            description: "Failed to switch network. Please try manually.",
+            variant: "destructive",
+          })
+        },
+      },
+    )
+  }
+
   const isWrongNetwork = isConnected && chainId !== somniaTestnet.id
 
   if (isConnected && address) {
@@ -75,10 +105,10 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
       <div className="flex items-center gap-2">
         {isWrongNetwork && (
           <Button
-            onClick={() => switchChain({ chainId: somniaTestnet.id })}
+            onClick={handleNetworkSwitch}
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 text-orange-500 border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+            className="flex items-center gap-2 text-orange-500 border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 bg-transparent"
             disabled={isSwitching}
           >
             <AlertTriangle className="w-4 h-4" />
@@ -111,7 +141,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
             </DropdownMenuItem>
             {isWrongNetwork && (
               <DropdownMenuItem
-                onClick={() => switchChain({ chainId: somniaTestnet.id })}
+                onClick={handleNetworkSwitch}
                 className="text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
                 disabled={isSwitching}
               >
@@ -119,7 +149,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
-              onClick={() => disconnect()}
+              onClick={handleDisconnect}
               className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               Disconnect Wallet

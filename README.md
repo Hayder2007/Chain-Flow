@@ -1,47 +1,30 @@
-ChainFlow
+# chainflow
 
-Your all-in-one onchain productivity & task management platform
+*Automatically synced with your [v0.app](https://v0.app) deployments*
 
-ChainFlow merges habit tracking, task management, and automated onchain payouts in one seamless flow. Think Notion, Trello, and GitHub—but fully decentralized and blockchain-verified.
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/proofofdiscipline-3595s-projects/v0-chainflow)
+[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/op8iCjXqWMI)
 
+## Overview
 
+This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
+Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
 
-🚀 Features
+## Deployment
 
-Personal Zone: Build habits, track streaks, and get rewarded—all verified onchain.
+Your project is live at:
 
-Work Zone: Manage teams, assign tasks, verify completion, and automate crypto payouts.
+**[https://vercel.com/proofofdiscipline-3595s-projects/v0-chainflow](https://vercel.com/proofofdiscipline-3595s-projects/v0-chainflow)**
 
-Smart Automation: Onchain verification + offchain caching for blazing-fast UI.
+## Build your app
 
-Analytics & Insights: Track performance with clear, immutable records.
+Continue building your app on:
 
-Multi-Wallet Support: Connect via MetaMask or any injected wallet, auto-switch to Somnia Testnet.
+**[https://v0.app/chat/projects/op8iCjXqWMI](https://v0.app/chat/projects/op8iCjXqWMI)**
 
+## How It Works
 
-
-📈 Roadmap
-
-Phase 1: Live Vercel frontend, habit tracker, task board, personal streak system.
-Phase 2: Full team management with role-based permissions and automated payouts.
-Phase 3: AI/zk-based task verification & leaderboard scoring.
-Phase 4: Launch token, token-gated premium features, mobile-friendly UI, DAO templates.
-
-
-
-🔗 Links
-
-Dapp: https://chainflow.store
-
-X: https://x.com/ChainFlow_xyz
-
-Discord: https://discord.gg/KW8DZmHmSP
-
-
-
-💡 Notes
-
-Frontend is built with Next.js + Vercel.
-Contract is build with Solidity.
-
-Fully compatible with Somnia Testnet smart contracts.
+1. Create and modify your project using [v0.app](https://v0.app)
+2. Deploy your chats from the v0 interface
+3. Changes are automatically pushed to this repository
+4. Vercel deploys the latest version from this repository

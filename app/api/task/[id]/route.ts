@@ -20,49 +20,19 @@ const somniaTestnet = defineChain({
   },
 })
 
-const WORK_CONTRACT_ADDRESS = "0xbffddeb4ae3ad53df99a556324245de7c0001ca4"
+const WORK_CONTRACT_ADDRESS = "0x29b0A9093D27C7a846ab5beD9378b04607049297"
 
 const WORK_CONTRACT_ABI = [
   {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "_taskId",
-        type: "uint256",
-      },
-    ],
+    inputs: [{ internalType: "uint256", name: "_taskId", type: "uint256" }],
     name: "getTask",
     outputs: [
-      {
-        internalType: "string",
-        name: "title",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "description",
-        type: "string",
-      },
-      {
-        internalType: "string",
-        name: "reward",
-        type: "string",
-      },
-      {
-        internalType: "address",
-        name: "assignee",
-        type: "address",
-      },
-      {
-        internalType: "bool",
-        name: "completed",
-        type: "bool",
-      },
-      {
-        internalType: "address",
-        name: "creator",
-        type: "address",
-      },
+      { internalType: "string", name: "title", type: "string" },
+      { internalType: "string", name: "description", type: "string" },
+      { internalType: "string", name: "reward", type: "string" },
+      { internalType: "address", name: "assignee", type: "address" },
+      { internalType: "address", name: "creator", type: "address" },
+      { internalType: "uint8", name: "status", type: "uint8" },
     ],
     stateMutability: "view",
     type: "function",
@@ -85,15 +55,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       args: [BigInt(taskId)],
     })
 
-    const [title, description, reward, assignee, completed, creator] = result
+    const [title, description, reward, assignee, creator, status] = result
 
     return NextResponse.json({
       title,
       description,
       reward,
       assignee,
-      completed,
       creator,
+      status, // Now returns status enum instead of boolean completed
     })
   } catch (error) {
     console.error("Error fetching task:", error)
