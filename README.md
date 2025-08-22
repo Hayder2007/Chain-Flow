@@ -33,4 +33,3 @@ Discord: https://discord.gg/KW8DZmHmSP
 Frontend is built with Next.js + Vercel. Contract is build with Solidity.
 
 Fully compatible with Somnia Testnet smart contracts.
-
