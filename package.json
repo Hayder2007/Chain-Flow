@@ -9,8 +9,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@aws-sdk/client-lambda": "latest",
-    "@aws-sdk/credential-providers": "latest",
     "@coinbase/wallet-mobile-sdk": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@mobile-wallet-protocol/client": "latest",
