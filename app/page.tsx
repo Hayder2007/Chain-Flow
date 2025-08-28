@@ -841,15 +841,16 @@ export default function LandingPage() {
               style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
             >
               <CardContent className="p-0">
-                <div className="w-20 h-20 mx-auto mb-0 flex items-center justify-center -translate-y-2">
-                    <svg className="w-16 h-16" viewBox="0 0 318.6 318.6" fill="none">
-                     <image 
-                         href="/Remix.svg" 
-                         width="318.6" 
-                         height="318.6" 
-                     />
-                  </svg>
-                </div>
+             <div className="w-20 h-20 mx-auto mb-0 flex items-center justify-center -translate-y-2">
+                <svg className="w-20 h-20" viewBox="0 0 318.6 318.6" fill="none">
+                       <image 
+                           href="/Remix.svg" 
+                           width="318.6" 
+                           height="318.6" 
+                       />
+                 </svg>
+             </div>
+
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
                   Remix
                 </h3>
