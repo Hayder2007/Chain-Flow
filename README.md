@@ -19,8 +19,11 @@ ChainFlow merges habit tracking, task management, and automated onchain payouts 
 ## 📈 Roadmap
 
 **Phase 1**: Live Vercel frontend, habit tracker, task board, personal streak system.
+
 **Phase 2**: Full team management with role-based permissions and automated payouts.
+
 **Phase 3**: AI/zk-based task verification & leaderboard scoring.
+
 **Phase 4**: Launch token, token-gated premium features, mobile-friendly UI, DAO templates.
 
 ## 🔗 Links
