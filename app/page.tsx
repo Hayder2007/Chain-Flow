@@ -869,11 +869,11 @@ export default function LandingPage() {
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                   <svg className="w-12 h-12" viewBox="0 0 100 100" fill="none">
-                    <circle cx="50" cy="50" r="45" fill="#00FFE5" stroke="#00FFE5" strokeWidth="2" />
-                    <circle cx="50" cy="50" r="35" fill="none" stroke="#1A1A1A" strokeWidth="3" />
-                    <circle cx="50" cy="50" r="25" fill="none" stroke="#1A1A1A" strokeWidth="2" />
-                    <circle cx="50" cy="50" r="15" fill="none" stroke="#1A1A1A" strokeWidth="2" />
-                    <circle cx="50" cy="50" r="8" fill="#1A1A1A" />
+                      <image 
+                        href="/Aurora.svg" 
+                        width="318.6" 
+                        height="318.6" 
+                     />
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
