@@ -844,80 +844,21 @@ export default function LandingPage() {
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                   <svg className="w-12 h-12" viewBox="0 0 318.6 318.6" fill="none">
-                    <path
-                      d="M274.1 35.5l-99.5 73.9L193 65.8z"
-                      fill="#E2761B"
-                      stroke="#E2761B"
-                      strokeWidth="5.94"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="m44.4 35.5 98.7 74.6-17.5-44.3z"
-                      fill="#E4761B"
-                      stroke="#E4761B"
-                      strokeWidth="5.94"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="m238.3 206.8-26.5 40.6 56.7 15.6 16.3-55.3z"
-                      fill="#E4761B"
-                      stroke="#E4761B"
-                      strokeWidth="5.94"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="m33.9 207.7 16.2 55.3 56.7-15.6-26.5-40.6z"
-                      fill="#E4761B"
-                      stroke="#E4761B"
-                      strokeWidth="5.94"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="m103.6 138.2-15.8 23.9 56.3 2.5-1.9-60.6z"
-                      fill="#E4761B"
-                      stroke="#E4761B"
-                      strokeWidth="5.94"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="m214.9 138.2-39-34.8-1.3 61.2 56.2-2.5z"
-                      fill="#E4761B"
-                      stroke="#E4761B"
-                      strokeWidth="5.94"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="m106.8 247.4 33.8-16.5-29.2-22.8z"
-                      fill="#E4761B"
-                      stroke="#E4761B"
-                      strokeWidth="5.94"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="m177.9 230.9 33.9 16.5-4.7-39.3z"
-                      fill="#E4761B"
-                      stroke="#E4761B"
-                      strokeWidth="5.94"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                     <image 
+                         href="/Remix.svg" 
+                         width="318.6" 
+                         height="318.6" 
+                     />
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                  MetaMask
+                  Remix
                 </h3>
                 <p
                   className="text-sm"
                   style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
                 >
-                  Web3 wallet integration
+                  Ethereum smart contract IDE
                 </p>
               </CardContent>
             </Card>
