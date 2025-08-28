@@ -894,7 +894,7 @@ export default function LandingPage() {
             >
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
+                  <svg className="w-16 h-16" viewBox="0 0 318.6 318.6" fill="none">
                        <image 
                           href="/solidity.svg" 
                           width="318.6" 
