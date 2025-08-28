@@ -815,8 +815,8 @@ export default function LandingPage() {
               style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
             >
               <CardContent className="p-0">
-               <div className="w-20 h-20 mx-auto mb-2 flex items-center justify-center">
-                  <svg className="w-16 h-16" viewBox="0 0 318.6 318.6" fill="none">
+               <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <svg className="w-14 h-14" viewBox="0 0 318.6 318.6" fill="none">
                     <image 
                       href="/vercel-icon-light.svg" 
                       width="318.6" 
@@ -841,8 +841,8 @@ export default function LandingPage() {
               style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
             >
               <CardContent className="p-0">
-                <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-12 h-12" viewBox="0 0 318.6 318.6" fill="none">
+                <div className="w-20 h-20 mx-auto mb-0 flex items-center justify-center -translate-y-2">
+                    <svg className="w-16 h-16" viewBox="0 0 318.6 318.6" fill="none">
                      <image 
                          href="/Remix.svg" 
                          width="318.6" 
