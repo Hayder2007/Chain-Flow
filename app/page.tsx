@@ -895,12 +895,11 @@ export default function LandingPage() {
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                   <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 0L5.5 8.5L12 12L18.5 8.5L12 0Z" fill="#627EEA" />
-                    <path d="M12 0L5.5 8.5L12 12V0Z" fill="#8A92B2" />
-                    <path d="M12 16.5L5.5 12.5L12 24L18.5 12.5L12 16.5Z" fill="#627EEA" />
-                    <path d="M12 24V16.5L5.5 12.5L12 24Z" fill="#8A92B2" />
-                    <path d="M12 12L18.5 8.5L12 4.5V12Z" fill="#8A92B2" />
-                    <path d="M5.5 8.5L12 12V4.5L5.5 8.5Z" fill="#627EEA" />
+                       <image 
+                          href="/solidity.svg" 
+                          width="318.6" 
+                          height="318.6" 
+                      />
                   </svg>
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
