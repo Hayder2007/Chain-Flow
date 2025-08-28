@@ -815,13 +815,12 @@ export default function LandingPage() {
               style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
             >
               <CardContent className="p-0">
-                <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-12 h-12" viewBox="0 0 24 24" fill="none">
-                    <rect width="24" height="24" rx="5.4" fill="#000" />
-                    <rect x="2" y="2" width="20" height="20" rx="3.4" fill="#fff" />
-                    <path
-                      d="M8.001 9.932l1.804 3.122a.343.343 0 00.295.171h4.084c.131 0 .24-.083.295-.171L16.283 9.932c.064-.111-.016-.253-.142-.253h-7.998a.17.17 0 00-.142.253z"
-                      fill="#000"
+               <div className="w-20 h-20 mx-auto mb-2 flex items-center justify-center">
+                  <svg className="w-16 h-16" viewBox="0 0 318.6 318.6" fill="none">
+                    <image 
+                      href="/vercel-icon-light.svg" 
+                      width="318.6" 
+                      height="318.6" 
                     />
                   </svg>
                 </div>
