@@ -30,7 +30,6 @@ import { WalletConnect } from "@/components/wallet-connect"
 import { useAccount } from "wagmi"
 import { useTaskBoard, type Task } from "@/hooks/use-task-board"
 import { useToast } from "@/hooks/use-toast"
-import { BlockchainLoading } from "@/components/blockchain-loading"
 import { LoadingSpinner } from "@/components/loading-spinner"
 
 export default function WorkZone() {
@@ -38,7 +37,7 @@ export default function WorkZone() {
   const isDarkMode = theme === "dark"
   const [mounted, setMounted] = useState(false)
   const { address } = useAccount()
-  const { tasks, createTask, completeTaskByAssignee, confirmTaskByCreator, getStats } = useTaskBoard()
+  const { tasks, createTask, completeTaskByAssignee, confirmTaskByCreator, getStats, isLoading } = useTaskBoard()
   const { toast } = useToast()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [submissionUrl, setSubmissionUrl] = useState("")
@@ -49,7 +48,6 @@ export default function WorkZone() {
     assignee: "",
     reward: "",
   })
-  const [isLoading, setIsLoading] = useState(true)
   const [isCreatingTask, setIsCreatingTask] = useState(false)
 
   const stats = getStats
@@ -57,16 +55,6 @@ export default function WorkZone() {
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  useEffect(() => {
-    if (!mounted) return
-
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 2500) // 2.5 second loading simulation
-
-    return () => clearTimeout(timer)
-  }, [mounted])
 
   if (!mounted) {
     return (
@@ -175,64 +163,6 @@ export default function WorkZone() {
     return tasks.filter((task) => task.status === status)
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen relative" style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}>
-        <nav
-          className="fixed top-0 w-full z-50 backdrop-blur-md py-4 border-b"
-          style={{
-            backgroundColor: isDarkMode ? "rgba(26, 26, 26, 0.9)" : "rgba(255, 255, 255, 0.9)",
-            borderColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-            <div className="flex items-center space-x-6">
-              <Link href="/app" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                <img
-                  src={isDarkMode ? "/logo-dark.svg" : "/logo-light.svg"}
-                  alt="ChainFlow"
-                  className="w-7 h-7 transition-opacity duration-300"
-                />
-                <span className="text-lg font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                  ChainFlow
-                </span>
-              </Link>
-              <div
-                className="flex items-center space-x-2 text-sm"
-                style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.6)" : "rgba(107, 114, 128, 1)" }}
-              >
-                <Link href="/app" className="hover:text-[#00FFE5] transition-colors flex items-center">
-                  <ArrowLeft className="w-4 h-4 mr-1" />
-                  Zones
-                </Link>
-                <span>/</span>
-                <span>Work</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg transition-colors"
-                style={{
-                  backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(26, 26, 26, 0.1)",
-                  color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
-                }}
-              >
-                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-        </nav>
-
-        <div className="pt-20">
-          <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center min-h-[60vh]">
-            <BlockchainLoading message="Fetching your work tasks from the blockchain..." isDarkMode={isDarkMode} />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}>
       <nav
@@ -244,7 +174,7 @@ export default function WorkZone() {
       >
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center space-x-6">
-            <Link href="/app" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <img
                 src={isDarkMode ? "/logo-dark.svg" : "/logo-light.svg"}
                 alt="ChainFlow"
@@ -475,38 +405,41 @@ export default function WorkZone() {
             </Card>
           </div>
 
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList
-              className="grid w-full grid-cols-4"
+          {isLoading && address ? (
+            <Card
+              className="border-2 border-[#00FFE5]/20 p-12 text-center"
               style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
             >
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="assigned">Assigned</TabsTrigger>
-              <TabsTrigger value="doneByAssignee">Done</TabsTrigger>
-              <TabsTrigger value="confirmedByCreator">Confirmed</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all" className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {tasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    isDarkMode={isDarkMode}
-                    address={address}
-                    onMarkDone={handleMarkDone}
-                    onConfirmDone={handleConfirmDone}
-                    getStatusColor={getStatusColor}
-                    getStatusIcon={getStatusIcon}
-                  />
-                ))}
+              <div className="flex flex-col items-center space-y-4">
+                <LoadingSpinner size="lg" className="text-[#00FFE5]" />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
+                    Loading tasks...
+                  </h3>
+                  <p
+                    className="text-sm"
+                    style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
+                  >
+                    Fetching your tasks from the blockchain
+                  </p>
+                </div>
               </div>
-            </TabsContent>
+            </Card>
+          ) : tasks.length > 0 ? (
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList
+                className="grid w-full grid-cols-4"
+                style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
+              >
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="assigned">Assigned</TabsTrigger>
+                <TabsTrigger value="doneByAssignee">Done</TabsTrigger>
+                <TabsTrigger value="confirmedByCreator">Confirmed</TabsTrigger>
+              </TabsList>
 
-            {["assigned", "doneByAssignee", "confirmedByCreator"].map((status) => (
-              <TabsContent key={status} value={status} className="mt-6">
+              <TabsContent value="all" className="mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filterTasksByStatus(status as Task["status"]).map((task) => (
+                  {tasks.map((task) => (
                     <TaskCard
                       key={task.id}
                       task={task}
@@ -520,10 +453,27 @@ export default function WorkZone() {
                   ))}
                 </div>
               </TabsContent>
-            ))}
-          </Tabs>
 
-          {tasks.length === 0 && (
+              {["assigned", "doneByAssignee", "confirmedByCreator"].map((status) => (
+                <TabsContent key={status} value={status} className="mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filterTasksByStatus(status as Task["status"]).map((task) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        isDarkMode={isDarkMode}
+                        address={address}
+                        onMarkDone={handleMarkDone}
+                        onConfirmDone={handleConfirmDone}
+                        getStatusColor={getStatusColor}
+                        getStatusIcon={getStatusIcon}
+                      />
+                    ))}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
             <Card
               className="border-2 border-dashed border-[#00FFE5]/20 p-12 text-center"
               style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.02)" : "rgba(255, 255, 255, 0.5)" }}
@@ -536,11 +486,12 @@ export default function WorkZone() {
                 className="text-lg mb-6"
                 style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
               >
-                Create your first task to start managing your team
+                {address ? "Create your first task to start managing your team" : "Connect your wallet to create tasks"}
               </p>
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
                 className="bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
+                disabled={!address}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Task

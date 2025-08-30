@@ -13,10 +13,10 @@ import { Progress } from "@/components/ui/progress"
 import { Target, Plus, CheckCircle, Flame, TrendingUp, Sun, Moon, ArrowLeft, Activity, Zap } from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
+import { WalletConnect } from "@/components/wallet-connect"
 import { useAccount } from "wagmi"
 import { useHabitTracker, type Habit } from "@/hooks/use-habit-tracker"
 import { useToast } from "@/hooks/use-toast"
-import { BlockchainLoading } from "@/components/blockchain-loading"
 import { LoadingSpinner } from "@/components/loading-spinner"
 
 export default function PersonalZone() {
@@ -137,66 +137,6 @@ export default function PersonalZone() {
     }
   }, [])
 
-  if (isLoadingHabits) {
-    return (
-      <div className="min-h-screen relative" style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}>
-        {/* Top Navigation */}
-        <nav
-          className="fixed top-0 w-full z-50 backdrop-blur-md py-4 border-b"
-          style={{
-            backgroundColor: isDarkMode ? "rgba(26, 26, 26, 0.9)" : "rgba(255, 255, 255, 0.9)",
-            borderColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-            <div className="flex items-center space-x-6">
-              <Link href="/app" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                <img
-                  src={isDarkMode ? "/logo-dark.svg" : "/logo-light.svg"}
-                  alt="ChainFlow"
-                  className="w-7 h-7 transition-opacity duration-300"
-                />
-                <span className="text-lg font-bold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                  ChainFlow
-                </span>
-              </Link>
-              <div
-                className="flex items-center space-x-2 text-sm"
-                style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.6)" : "rgba(107, 114, 128, 1)" }}
-              >
-                <Link href="/app" className="hover:text-[#00FFE5] transition-colors flex items-center">
-                  <ArrowLeft className="w-4 h-4 mr-1" />
-                  Zones
-                </Link>
-                <span>/</span>
-                <span>Personal</span>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={toggleTheme}
-                className="p-2 rounded-lg transition-colors"
-                style={{
-                  backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.1)" : "rgba(26, 26, 26, 0.1)",
-                  color: isDarkMode ? "#F5F7FA" : "#1A1A1A",
-                }}
-              >
-                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-        </nav>
-
-        {/* Loading Content */}
-        <div className="pt-20">
-          <div className="max-w-7xl mx-auto px-6 py-16 flex items-center justify-center min-h-[60vh]">
-            <BlockchainLoading message="Fetching your personal habits from the blockchain..." isDarkMode={isDarkMode} />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}>
       {/* Top Navigation */}
@@ -209,7 +149,7 @@ export default function PersonalZone() {
       >
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
           <div className="flex items-center space-x-6">
-            <Link href="/app" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+            <Link href="/" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
               <img
                 src={isDarkMode ? "/logo-dark.svg" : "/logo-light.svg"}
                 alt="ChainFlow"
@@ -232,6 +172,7 @@ export default function PersonalZone() {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            <WalletConnect isDarkMode={isDarkMode} />
             <Button
               onClick={toggleTheme}
               className="p-2 rounded-lg transition-colors"
@@ -435,78 +376,98 @@ export default function PersonalZone() {
           </div>
 
           {/* Habits Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {habits.map((habit) => (
-              <Card
-                key={habit.id}
-                className="border-2 border-[#00FFE5]/20 hover:border-[#00FFE5]/40 transition-all duration-300"
-                style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full ${getCategoryColor(habit.category)}`} />
-                      <CardTitle className="text-lg" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                        {habit.name}
-                      </CardTitle>
-                    </div>
-                    <Badge variant="secondary" className="flex items-center space-x-1">
-                      {getCategoryIcon(habit.category)}
-                      <span className="capitalize">{habit.category}</span>
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
+          {isLoadingHabits && address ? (
+            <Card
+              className="border-2 border-[#00FFE5]/20 p-12 text-center"
+              style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
+            >
+              <div className="flex flex-col items-center space-y-4">
+                <LoadingSpinner size="lg" className="text-[#00FFE5]" />
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
+                    Loading habits...
+                  </h3>
                   <p
-                    className="text-sm mb-4"
+                    className="text-sm"
                     style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
                   >
-                    {habit.description}
+                    Fetching your habits from the blockchain
                   </p>
-
-                  <div className="space-y-3">
+                </div>
+              </div>
+            </Card>
+          ) : habits.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {habits.map((habit) => (
+                <Card
+                  key={habit.id}
+                  className="border-2 border-[#00FFE5]/20 hover:border-[#00FFE5]/40 transition-all duration-300"
+                  style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.05)" : "white" }}
+                >
+                  <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
-                      >
-                        Current Streak
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        <Flame className="w-4 h-4 text-orange-500" />
-                        <span className="font-bold text-[#00FFE5]">{habit.streak} days</span>
+                      <div className="flex items-center space-x-2">
+                        <div className={`w-3 h-3 rounded-full ${getCategoryColor(habit.category)}`} />
+                        <CardTitle className="text-lg" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
+                          {habit.name}
+                        </CardTitle>
+                      </div>
+                      <Badge variant="secondary" className="flex items-center space-x-1">
+                        {getCategoryIcon(habit.category)}
+                        <span className="capitalize">{habit.category}</span>
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p
+                      className="text-sm mb-4"
+                      style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
+                    >
+                      {habit.description}
+                    </p>
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
+                        >
+                          Current Streak
+                        </span>
+                        <div className="flex items-center space-x-1">
+                          <Flame className="w-4 h-4 text-orange-500" />
+                          <span className="font-bold text-[#00FFE5]">{habit.streak} days</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
+                        >
+                          Total Check-ins
+                        </span>
+                        <span className="font-bold text-[#00FFE5]">{habit.totalCheckins}</span>
+                      </div>
+
+                      <Progress value={Math.min((habit.streak / 30) * 100, 100)} className="h-2" />
+
+                      <div className="flex space-x-2 pt-2">
+                        <Button
+                          onClick={() => handleCheckIn(habit.id)}
+                          className="flex-1 bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
+                          disabled={!address}
+                        >
+                          <CheckCircle className="w-4 h-4 mr-2" />
+                          Check In
+                        </Button>
                       </div>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
-                      >
-                        Total Check-ins
-                      </span>
-                      <span className="font-bold text-[#00FFE5]">{habit.totalCheckins}</span>
-                    </div>
-
-                    <Progress value={Math.min((habit.streak / 30) * 100, 100)} className="h-2" />
-
-                    <div className="flex space-x-2 pt-2">
-                      <Button
-                        onClick={() => handleCheckIn(habit.id)}
-                        className="flex-1 bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
-                        disabled={!address}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Check In
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {habits.length === 0 && (
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
             <Card
               className="border-2 border-dashed border-[#00FFE5]/20 p-12 text-center"
               style={{ backgroundColor: isDarkMode ? "rgba(245, 247, 250, 0.02)" : "rgba(255, 255, 255, 0.5)" }}
@@ -519,11 +480,14 @@ export default function PersonalZone() {
                 className="text-lg mb-6"
                 style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
               >
-                Create your first habit to start building consistency
+                {address
+                  ? "Create your first habit to start building consistency"
+                  : "Connect your wallet to create habits"}
               </p>
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
                 className="bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
+                disabled={!address}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Habit
