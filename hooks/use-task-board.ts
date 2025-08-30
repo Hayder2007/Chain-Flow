@@ -27,6 +27,9 @@ export interface Task {
 const WORK_CONTRACT_ADDRESS = "0x29b0A9093D27C7a846ab5beD9378b04607049297" as const
 const SOMNIA_TESTNET_CHAIN_ID = 50312
 
+const CACHE_KEY_PREFIX = "chainflow_tasks_"
+const CACHE_EXPIRATION_MS = 5 * 60 * 1000 // 5 minutes
+
 const WORK_CONTRACT_ABI = [
   {
     anonymous: false,
@@ -131,13 +134,65 @@ export function useTaskBoard() {
     chainId: SOMNIA_TESTNET_CHAIN_ID,
   })
 
+  const getCacheKey = (walletAddress: string) => `${CACHE_KEY_PREFIX}${walletAddress.toLowerCase()}`
+
+  const getCachedTasks = (walletAddress: string): Task[] | null => {
+    try {
+      const cached = sessionStorage.getItem(getCacheKey(walletAddress))
+      if (!cached) return null
+
+      const { data, timestamp } = JSON.parse(cached)
+      const now = Date.now()
+
+      if (now - timestamp > CACHE_EXPIRATION_MS) {
+        sessionStorage.removeItem(getCacheKey(walletAddress))
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error("Error reading cached tasks:", error)
+      return null
+    }
+  }
+
+  const setCachedTasks = (walletAddress: string, tasks: Task[]) => {
+    try {
+      const cacheData = {
+        data: tasks,
+        timestamp: Date.now(),
+      }
+      sessionStorage.setItem(getCacheKey(walletAddress), JSON.stringify(cacheData))
+    } catch (error) {
+      console.error("Error caching tasks:", error)
+    }
+  }
+
+  const clearCache = (walletAddress?: string) => {
+    try {
+      if (walletAddress) {
+        sessionStorage.removeItem(getCacheKey(walletAddress))
+      } else {
+        // Clear all chainflow task caches
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.startsWith(CACHE_KEY_PREFIX)) {
+            sessionStorage.removeItem(key)
+          }
+        })
+      }
+    } catch (error) {
+      console.error("Error clearing cache:", error)
+    }
+  }
+
   useWatchContractEvent({
     address: WORK_CONTRACT_ADDRESS,
     abi: WORK_CONTRACT_ABI,
     eventName: "TaskCreated",
     onLogs(logs) {
       console.log("[v0] TaskCreated event:", logs)
-      refreshTasksData()
+      if (address) clearCache(address)
+      refreshTasksData(true)
     },
   })
 
@@ -147,7 +202,8 @@ export function useTaskBoard() {
     eventName: "TaskDoneByAssignee",
     onLogs(logs) {
       console.log("[v0] TaskDoneByAssignee event:", logs)
-      refreshTasksData()
+      if (address) clearCache(address)
+      refreshTasksData(true)
     },
   })
 
@@ -157,7 +213,8 @@ export function useTaskBoard() {
     eventName: "TaskConfirmedByCreator",
     onLogs(logs) {
       console.log("[v0] TaskConfirmedByCreator event:", logs)
-      refreshTasksData()
+      if (address) clearCache(address)
+      refreshTasksData(true)
     },
   })
 
@@ -174,8 +231,16 @@ export function useTaskBoard() {
     }
   }
 
-  const refreshTasksData = async () => {
+  const refreshTasksData = async (forceRefresh = false) => {
     if (!address) return
+
+    if (!forceRefresh) {
+      const cachedTasks = getCachedTasks(address)
+      if (cachedTasks) {
+        setTasks(cachedTasks)
+        return
+      }
+    }
 
     setIsLoading(true)
 
@@ -184,7 +249,9 @@ export function useTaskBoard() {
       const count = Number(freshTasksCount || 0)
 
       if (count === 0) {
-        setTasks([])
+        const emptyTasks: Task[] = []
+        setTasks(emptyTasks)
+        setCachedTasks(address, emptyTasks)
         setIsLoading(false)
         return
       }
@@ -219,6 +286,7 @@ export function useTaskBoard() {
       )
 
       setTasks(userTasks)
+      setCachedTasks(address, userTasks)
     } catch (error) {
       console.error("Error refreshing tasks from blockchain:", error)
       toast({
@@ -238,13 +306,24 @@ export function useTaskBoard() {
   }, [tasksCount, address])
 
   useEffect(() => {
+    if (!address) {
+      clearCache()
+    }
+  }, [address])
+
+  useEffect(() => {
     if (isConfirmed && currentTxHash) {
       setIsCreatingTask(false)
       setIsCompletingTask(false)
       setIsConfirmingTask(false)
 
+      if (address) {
+        clearCache(address)
+      }
+
       setTimeout(() => {
-        refreshTasksData().then(() => {
+        refreshTasksData(true).then(() => {
+          // Force refresh from blockchain
           toast({
             title: "Success",
             description: "Transaction confirmed and data updated successfully!",
@@ -252,7 +331,7 @@ export function useTaskBoard() {
         })
       }, 1000)
     }
-  }, [isConfirmed, currentTxHash])
+  }, [isConfirmed, currentTxHash, address])
 
   const ensureCorrectNetwork = async () => {
     if (chainId !== SOMNIA_TESTNET_CHAIN_ID) {
@@ -418,6 +497,6 @@ export function useTaskBoard() {
     isCompletingTask: isCompletingTask || isConfirmingReceipt,
     isConfirmingTask: isConfirmingTask || isConfirmingReceipt,
     transactionError,
-    refreshTasks: refreshTasksData,
+    refreshTasks: () => refreshTasksData(true), // Force refresh when manually called
   }
 }
