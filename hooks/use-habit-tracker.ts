@@ -191,13 +191,13 @@ export function useHabitTracker() {
     setTransactionError(null)
 
     try {
-      // get nonce
+      // Get current nonce
       const nonce = await publicClient.getTransactionCount({
         address: address,
         blockTag: "pending",
       })
 
-      // estimate gas
+      // Estimate gas for the transaction
       const gasEstimate = await publicClient.estimateContractGas({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -206,15 +206,15 @@ export function useHabitTracker() {
         account: address,
       })
 
-      // buffer gas
+      // Apply 1.5x buffer to gas estimate
       const gasLimit = (gasEstimate * 15n) / 10n
 
-      // get gas price (legacy) — works as fallback; wallets may override
+      // Get current gas price
       const gasPrice = await publicClient.getGasPrice()
 
-      console.log(`[habit] tx params - fn:${functionName} nonce:${nonce.toString()} gasEst:${gasEstimate.toString()} gasLimit:${gasLimit.toString()}`)
+      console.log(`[v0] Transaction params - Function: ${functionName}, Gas: ${gasLimit}, Nonce: ${nonce}`)
 
-      // send tx via walletClient — keep chain info
+      // Execute transaction with proper parameters
       const hash = await walletClient.writeContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -235,7 +235,7 @@ export function useHabitTracker() {
 
       return true
     } catch (err: any) {
-      console.error(`[habit] Transaction failed for ${functionName}:`, err)
+      console.error(`[v0] Transaction failed for ${functionName}:`, err)
 
       let errorMessage = "Transaction failed"
       if (err.message?.includes("insufficient funds")) {
@@ -397,80 +397,30 @@ export function useHabitTracker() {
   }, [transactionError])
 
   const addHabit = async (habitData: { name: string; description: string; category: string }) => {
-    if (!address) {
+    const success = await executeTransaction(
+      "createHabit",
+      [habitData.name, habitData.description, habitData.category],
+      setIsCreatingHabit,
+    )
+
+    if (success) {
       toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to create habits.",
-        variant: "destructive",
+        title: "Creating Habit...",
+        description: "Habit creation transaction submitted successfully.",
       })
-      return
-    }
-
-    const networkOk = await ensureCorrectNetwork()
-    if (!networkOk) return
-
-    setIsCreatingHabit(true)
-    setTransactionError(null)
-
-    try {
-      const success = await executeTransaction(
-        "createHabit",
-        [habitData.name, habitData.description, habitData.category],
-        setIsCreatingHabit,
-      )
-
-      if (success) {
-        toast({
-          title: "Transaction Pending",
-          description: "Please sign the transaction to create your habit...",
-        })
-      }
-    } catch (err: any) {
-      setTransactionError(err.message || "Failed to create habit")
-      toast({
-        title: "Transaction Failed",
-        description: err.message || "Failed to create habit on blockchain",
-        variant: "destructive",
-      })
-      setIsCreatingHabit(false)
     }
   }
 
   const checkInHabit = async (habitId: number) => {
-    if (!address) {
+    const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000))
+
+    const success = await executeTransaction("checkIn", [BigInt(habitId), BigInt(today)], setIsCheckingIn)
+
+    if (success) {
       toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to check in.",
-        variant: "destructive",
+        title: "Recording Check-in...",
+        description: "Check-in transaction submitted successfully.",
       })
-      return
-    }
-
-    const networkOk = await ensureCorrectNetwork()
-    if (!networkOk) return
-
-    setIsCheckingIn(true)
-    setTransactionError(null)
-
-    try {
-      const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000))
-
-      const success = await executeTransaction("checkIn", [BigInt(habitId), BigInt(today)], setIsCheckingIn)
-
-      if (success) {
-        toast({
-          title: "Transaction Pending",
-          description: "Please sign the transaction to record your check-in...",
-        })
-      }
-    } catch (err: any) {
-      setTransactionError(err.message || "Failed to check in")
-      toast({
-        title: "Transaction Failed",
-        description: err.message || "Failed to record check-in on blockchain",
-        variant: "destructive",
-      })
-      setIsCheckingIn(false)
     }
   }
 
