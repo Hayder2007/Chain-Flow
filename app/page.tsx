@@ -957,13 +957,13 @@ export default function LandingPage() {
                   href="https://github.com/Hayder2007/Chain-Flow"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-[#00FFE5] transition-colors"
+                  className="text-gray-400 hover:text-[#00FFE5] transition-colors group"
                 >
-                     <img 
-                      src="/github.png" 
-                      alt="GitHub" 
-                      className="w-6 h-6" 
-                     />
+                  <img
+                    src="/github.png"
+                    alt="GitHub"
+                    className="w-6 h-6 filter brightness-75 group-hover:brightness-100 group-hover:hue-rotate-180 transition-all duration-300"
+                  />
                 </a>
                 <a
                   href="https://x.com/chainflow_xyz"
@@ -979,13 +979,13 @@ export default function LandingPage() {
                   href="https://discord.gg/aaW6G3A427"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-[#00FFE5] transition-colors"
+                  className="text-gray-400 hover:text-[#00FFE5] transition-colors group"
                 >
-                    <img 
-                        src="/discord.png" 
-                        alt="discord" 
-                        className="w-6 h-6" 
-                    />
+                  <img
+                    src="/discord.png"
+                    alt="discord"
+                    className="h-9 ml-[-7px] w-[50px] filter brightness-75 group-hover:brightness-100 group-hover:hue-rotate-180 transition-all duration-300"
+                  />
                 </a>
               </div>
             </div>
