@@ -2,21 +2,21 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createPublicClient, http } from "viem"
 import { defineChain } from "viem"
 
-const somniaTestnet = defineChain({
-  id: 50312,
-  name: "Somnia Testnet",
-  network: "somnia-testnet",
+const baseMainnet = defineChain({
+  id: 8453,
+  name: "Base Mainnet",
+  network: "base-mainnet",
   nativeCurrency: {
     decimals: 18,
-    name: "Somnia Token",
-    symbol: "STT",
+    name: "Ether",
+    symbol: "ETH",
   },
   rpcUrls: {
     default: {
-      http: ["https://dream-rpc.somnia.network/"],
+      http: ["https://mainnet.base.org"],
     },
     public: {
-      http: ["https://dream-rpc.somnia.network/"],
+      http: ["https://mainnet.base.org"],
     },
   },
 })
@@ -26,10 +26,13 @@ const CONTRACT_ABI = [
     inputs: [{ name: "habitId", type: "uint256" }],
     name: "getHabit",
     outputs: [
-      { name: "", type: "string" },
-      { name: "", type: "string" },
-      { name: "", type: "string" },
-      { name: "", type: "address" },
+      { name: "name", type: "string" },
+      { name: "description", type: "string" },
+      { name: "category", type: "string" },
+      { name: "creator", type: "address" },
+      { name: "lastCheckinDay", type: "uint256" },
+      { name: "currentStreak", type: "uint256" },
+      { name: "maxStreak", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",
@@ -42,7 +45,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const habitId = Number.parseInt(params.id)
 
     const client = createPublicClient({
-      chain: somniaTestnet,
+      chain: baseMainnet,
       transport: http(),
     })
 
@@ -58,6 +61,9 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       description: result[1],
       category: result[2],
       creator: result[3],
+      lastCheckinDay: result[4],
+      currentStreak: result[5],
+      maxStreak: result[6],
     })
   } catch (error) {
     console.error("Error fetching habit:", error)

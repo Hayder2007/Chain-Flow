@@ -5,7 +5,7 @@ import { useAccount, useConnect, useDisconnect, useSwitchChain, useChainId } fro
 import { Button } from "@/components/ui/button"
 import { Wallet, ChevronDown, AlertTriangle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { somniaTestnet } from "@/lib/wagmi"
+import { baseMainnet } from "@/lib/wagmi"
 import { useToast } from "@/hooks/use-toast"
 
 export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) {
@@ -18,22 +18,21 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
   const { toast } = useToast()
 
   useEffect(() => {
-    if (isConnected && chainId !== somniaTestnet.id) {
-      // Auto-switch to Somnia network
+    if (isConnected && chainId !== baseMainnet.id) {
       switchChain(
-        { chainId: somniaTestnet.id },
+        { chainId: baseMainnet.id },
         {
           onError: (error) => {
             toast({
               title: "Network Switch Required",
-              description: "Please switch to Somnia Testnet to use this app",
+              description: "Please switch to Base Mainnet to use this app",
               variant: "destructive",
             })
           },
           onSuccess: () => {
             toast({
               title: "Network Switched",
-              description: "Successfully connected to Somnia Testnet",
+              description: "Successfully connected to Base Mainnet",
             })
           },
         },
@@ -53,7 +52,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
           // Network switching will be handled by useEffect
           toast({
             title: "Wallet Connected",
-            description: "Switching to Somnia Testnet...",
+            description: "Switching to Base Mainnet...",
           })
         },
         onError: (error) => {
@@ -79,12 +78,12 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
 
   const handleNetworkSwitch = () => {
     switchChain(
-      { chainId: somniaTestnet.id },
+      { chainId: baseMainnet.id },
       {
         onSuccess: () => {
           toast({
             title: "Network Switched",
-            description: "Successfully switched to Somnia Testnet",
+            description: "Successfully switched to Base Mainnet",
           })
         },
         onError: (error) => {
@@ -98,7 +97,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
     )
   }
 
-  const isWrongNetwork = isConnected && chainId !== somniaTestnet.id
+  const isWrongNetwork = isConnected && chainId !== baseMainnet.id
 
   if (isConnected && address) {
     return (
@@ -112,7 +111,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
             disabled={isSwitching}
           >
             <AlertTriangle className="w-4 h-4" />
-            {isSwitching ? "Switching..." : "Switch to Somnia"}
+            {isSwitching ? "Switching..." : "Switch to Base"}
           </Button>
         )}
 
@@ -137,7 +136,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
             }}
           >
             <DropdownMenuItem disabled className="text-xs opacity-60">
-              Network: {chainId === somniaTestnet.id ? "Somnia Testnet" : "Wrong Network"}
+              Network: {chainId === baseMainnet.id ? "Base Mainnet" : "Wrong Network"}
             </DropdownMenuItem>
             {isWrongNetwork && (
               <DropdownMenuItem
@@ -145,7 +144,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
                 className="text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
                 disabled={isSwitching}
               >
-                {isSwitching ? "Switching..." : "Switch to Somnia"}
+                {isSwitching ? "Switching..." : "Switch to Base"}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
@@ -197,7 +196,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
           </DropdownMenuItem>
         ))}
         <DropdownMenuItem disabled className="text-xs opacity-60 border-t mt-1 pt-2">
-          Will connect to: Somnia Testnet
+          Will connect to: Base Mainnet
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

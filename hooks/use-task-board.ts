@@ -24,8 +24,8 @@ export interface Task {
   verificationNotes?: string
 }
 
-const WORK_CONTRACT_ADDRESS = "0x29b0A9093D27C7a846ab5beD9378b04607049297" as const
-const SOMNIA_TESTNET_CHAIN_ID = 50312
+const WORK_CONTRACT_ADDRESS = "0x86D160b97534069E33362a713f47CFc8BD503346" as const
+const BASE_MAINNET_CHAIN_ID = 8453
 
 const CACHE_KEY_PREFIX = "chainflow_tasks_"
 const CACHE_EXPIRATION_MS = 5 * 60 * 1000 // 5 minutes
@@ -131,7 +131,7 @@ export function useTaskBoard() {
     address: WORK_CONTRACT_ADDRESS,
     abi: WORK_CONTRACT_ABI,
     functionName: "getTasksCount",
-    chainId: SOMNIA_TESTNET_CHAIN_ID,
+    chainId: BASE_MAINNET_CHAIN_ID,
   })
 
   const getCacheKey = (walletAddress: string) => `${CACHE_KEY_PREFIX}${walletAddress.toLowerCase()}`
@@ -334,14 +334,14 @@ export function useTaskBoard() {
   }, [isConfirmed, currentTxHash, address])
 
   const ensureCorrectNetwork = async () => {
-    if (chainId !== SOMNIA_TESTNET_CHAIN_ID) {
+    if (chainId !== BASE_MAINNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: SOMNIA_TESTNET_CHAIN_ID })
+        await switchChain({ chainId: BASE_MAINNET_CHAIN_ID })
         return true
       } catch (error) {
         toast({
           title: "Network Switch Required",
-          description: "Please switch to Somnia Testnet to use this feature.",
+          description: "Please switch to Base Mainnet to use this feature.",
           variant: "destructive",
         })
         return false

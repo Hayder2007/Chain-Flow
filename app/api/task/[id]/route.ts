@@ -2,25 +2,25 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createPublicClient, http } from "viem"
 import { defineChain } from "viem"
 
-const somniaTestnet = defineChain({
-  id: 50312,
-  name: "Somnia Testnet",
+const baseMainnet = defineChain({
+  id: 8453,
+  name: "Base Mainnet",
   nativeCurrency: {
     decimals: 18,
-    name: "Somnia Token",
-    symbol: "STT",
+    name: "Ether",
+    symbol: "ETH",
   },
   rpcUrls: {
     default: {
-      http: ["https://dream-rpc.somnia.network/"],
+      http: ["https://mainnet.base.org"],
     },
   },
   blockExplorers: {
-    default: { name: "Somnia Explorer", url: "https://shannon-explorer.somnia.network/" },
+    default: { name: "Base Explorer", url: "https://base.blockscout.com/" },
   },
 })
 
-const WORK_CONTRACT_ADDRESS = "0x29b0A9093D27C7a846ab5beD9378b04607049297"
+const WORK_CONTRACT_ADDRESS = "0x86D160b97534069E33362a713f47CFc8BD503346"
 
 const WORK_CONTRACT_ABI = [
   {
@@ -40,7 +40,7 @@ const WORK_CONTRACT_ABI = [
 ] as const
 
 const client = createPublicClient({
-  chain: somniaTestnet,
+  chain: baseMainnet,
   transport: http(),
 })
 

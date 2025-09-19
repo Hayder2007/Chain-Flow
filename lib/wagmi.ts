@@ -1,35 +1,35 @@
 import { createConfig, http } from "wagmi"
 import { injected } from "wagmi/connectors"
 
-const somniaTestnet = {
-  id: 50312,
-  name: "Somnia Testnet",
+const baseMainnet = {
+  id: 8453,
+  name: "Base Mainnet",
   nativeCurrency: {
     decimals: 18,
-    name: "Somnia Test Token",
-    symbol: "STT",
+    name: "Ether",
+    symbol: "ETH",
   },
   rpcUrls: {
     default: {
-      http: ["https://dream-rpc.somnia.network/"],
+      http: ["https://mainnet.base.org"],
     },
   },
   blockExplorers: {
     default: {
-      name: "Somnia Explorer",
-      url: "https://shannon-explorer.somnia.network/",
+      name: "Base Explorer",
+      url: "https://base.blockscout.com/",
     },
   },
-  testnet: true,
+  testnet: false,
 } as const
 
 export const config = createConfig({
-  chains: [somniaTestnet],
+  chains: [baseMainnet],
   connectors: [injected()],
   transports: {
-    [somniaTestnet.id]: http(),
+    [baseMainnet.id]: http(),
   },
   ssr: true,
 })
 
-export { somniaTestnet }
+export { baseMainnet }

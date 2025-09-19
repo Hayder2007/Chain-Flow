@@ -259,7 +259,7 @@ export default function LandingPage() {
                 className="text-sm font-medium"
                 style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
               >
-                Built on Somnia
+                Built on Base
               </span>
             </div>
 
@@ -879,18 +879,16 @@ export default function LandingPage() {
             >
               <CardContent className="p-0">
                 <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <svg className="w-14 h-14" viewBox="0 0 318.6 318.6" fill="none">
-                    <image href="/Aurora.svg" width="318.6" height="318.6" />
-                  </svg>
+                  <img src="/baselogo.png" alt="Base Logo" className="w-14 h-14" />
                 </div>
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                  Somnia
+                  Base
                 </h3>
                 <p
                   className="text-sm"
                   style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
                 >
-                  High-performance L1 blockchain
+                  High-performance L2 blockchain
                 </p>
               </CardContent>
             </Card>
@@ -1019,7 +1017,7 @@ export default function LandingPage() {
 
           {/* License Line */}
           <div className="text-center">
-            <p className="text-gray-400 text-sm">© 2025 ChainFlow. All rights reserved. | Built on Somnia By Hayder.</p>
+            <p className="text-gray-400 text-sm">© 2025 ChainFlow. All rights reserved. | Built on Base By Hayder.</p>
           </div>
         </div>
       </footer>

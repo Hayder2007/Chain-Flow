@@ -1,14 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import {
-  useAccount,
-  useWaitForTransactionReceipt,
-  useReadContract,
-  useSwitchChain,
-  usePublicClient,
-  useWalletClient,
-} from "wagmi"
+import { useAccount, useWaitForTransactionReceipt, useSwitchChain, usePublicClient, useWalletClient } from "wagmi"
 import { toast } from "@/hooks/use-toast"
 
 export interface Habit {
@@ -22,18 +15,15 @@ export interface Habit {
   totalCheckins: number
 }
 
-const CONTRACT_ADDRESS = "0xb07bbd46ec078d7a990a87999acac46a9c737a47"
-const SOMNIA_CHAIN_ID = 50312
+const CONTRACT_ADDRESS = "0x9Dd20671aF9F1E94a86FB904018fc84a82caD57F"
+const BASE_MAINNET_CHAIN_ID = 8453
 
 const CACHE_KEY_PREFIX = "chainflow_habits_"
 const CACHE_EXPIRATION_MS = 5 * 60 * 1000 // 5 minutes
 
 const CONTRACT_ABI = [
   {
-    inputs: [
-      { name: "habitId", type: "uint256" },
-      { name: "dayIndex", type: "uint256" },
-    ],
+    inputs: [{ internalType: "uint256", name: "_habitId", type: "uint256" }],
     name: "checkIn",
     outputs: [],
     stateMutability: "nonpayable",
@@ -41,9 +31,9 @@ const CONTRACT_ABI = [
   },
   {
     inputs: [
-      { name: "name", type: "string" },
-      { name: "description", type: "string" },
-      { name: "category", type: "string" },
+      { internalType: "string", name: "_title", type: "string" },
+      { internalType: "string", name: "_description", type: "string" },
+      { internalType: "string", name: "_category", type: "string" },
     ],
     name: "createHabit",
     outputs: [],
@@ -51,31 +41,62 @@ const CONTRACT_ABI = [
     type: "function",
   },
   {
-    inputs: [{ name: "habitId", type: "uint256" }],
-    name: "getHabit",
-    outputs: [
-      { name: "", type: "string" },
-      { name: "", type: "string" },
-      { name: "", type: "string" },
-      { name: "", type: "address" },
-    ],
-    stateMutability: "view",
+    inputs: [{ internalType: "uint256", name: "_habitId", type: "uint256" }],
+    name: "deactivateHabit",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
-    inputs: [],
-    name: "getHabitsCount",
-    outputs: [{ name: "", type: "uint256" }],
+    anonymous: false,
+    inputs: [
+      { indexed: false, internalType: "uint256", name: "habitId", type: "uint256" },
+      { indexed: true, internalType: "address", name: "user", type: "address" },
+      { indexed: false, internalType: "uint256", name: "newStreak", type: "uint256" },
+    ],
+    name: "HabitCheckedIn",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: false, internalType: "uint256", name: "habitId", type: "uint256" },
+      { indexed: true, internalType: "address", name: "user", type: "address" },
+      { indexed: false, internalType: "string", name: "title", type: "string" },
+      { indexed: false, internalType: "string", name: "description", type: "string" },
+      { indexed: false, internalType: "string", name: "category", type: "string" },
+    ],
+    name: "HabitCreated",
+    type: "event",
+  },
+  {
+    inputs: [{ internalType: "address", name: "_user", type: "address" }],
+    name: "getHabits",
+    outputs: [
+      { internalType: "string[]", name: "titles", type: "string[]" },
+      { internalType: "string[]", name: "descriptions", type: "string[]" },
+      { internalType: "string[]", name: "categories", type: "string[]" },
+      { internalType: "uint256[]", name: "streaks", type: "uint256[]" },
+      { internalType: "uint256[]", name: "lastCheckins", type: "uint256[]" },
+      { internalType: "bool[]", name: "actives", type: "bool[]" },
+    ],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [
-      { name: "habitId", type: "uint256" },
-      { name: "dayIndex", type: "uint256" },
+      { internalType: "address", name: "", type: "address" },
+      { internalType: "uint256", name: "", type: "uint256" },
     ],
-    name: "isCheckedIn",
-    outputs: [{ name: "", type: "bool" }],
+    name: "userHabits",
+    outputs: [
+      { internalType: "string", name: "title", type: "string" },
+      { internalType: "string", name: "description", type: "string" },
+      { internalType: "string", name: "category", type: "string" },
+      { internalType: "uint256", name: "streak", type: "uint256" },
+      { internalType: "uint256", name: "lastCheckin", type: "uint256" },
+      { internalType: "bool", name: "active", type: "bool" },
+    ],
     stateMutability: "view",
     type: "function",
   },
@@ -96,13 +117,6 @@ export function useHabitTracker() {
   const [currentTxHash, setCurrentTxHash] = useState<`0x${string}` | undefined>()
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: currentTxHash,
-  })
-
-  const { data: habitsCount, refetch: refetchCount } = useReadContract({
-    address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
-    functionName: "getHabitsCount",
-    chainId: SOMNIA_CHAIN_ID,
   })
 
   const getCacheKey = (walletAddress: string) => `${CACHE_KEY_PREFIX}${walletAddress.toLowerCase()}`
@@ -157,14 +171,14 @@ export function useHabitTracker() {
   }
 
   const ensureCorrectNetwork = async () => {
-    if (chain?.id !== SOMNIA_CHAIN_ID) {
+    if (chain?.id !== BASE_MAINNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: SOMNIA_CHAIN_ID })
+        await switchChain({ chainId: BASE_MAINNET_CHAIN_ID })
         return true
       } catch (error) {
         toast({
           title: "Network Switch Required",
-          description: "Please switch to Somnia Testnet to use this feature.",
+          description: "Please switch to Base Mainnet to use this feature.",
           variant: "destructive",
         })
         return false
@@ -173,7 +187,6 @@ export function useHabitTracker() {
     return true
   }
 
-  // --- NEW: executeTransaction copied/adapted from work zone logic ---
   const executeTransaction = async (functionName: string, args: any[], setLoadingState: (l: boolean) => void) => {
     if (!address || !walletClient || !publicClient) {
       toast({
@@ -191,13 +204,11 @@ export function useHabitTracker() {
     setTransactionError(null)
 
     try {
-      // Get current nonce
       const nonce = await publicClient.getTransactionCount({
         address: address,
         blockTag: "pending",
       })
 
-      // Estimate gas for the transaction
       const gasEstimate = await publicClient.estimateContractGas({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -206,15 +217,11 @@ export function useHabitTracker() {
         account: address,
       })
 
-      // Apply 1.5x buffer to gas estimate
       const gasLimit = (gasEstimate * 15n) / 10n
-
-      // Get current gas price
       const gasPrice = await publicClient.getGasPrice()
 
       console.log(`[v0] Transaction params - Function: ${functionName}, Gas: ${gasLimit}, Nonce: ${nonce}`)
 
-      // Execute transaction with proper parameters
       const hash = await walletClient.writeContract({
         address: CONTRACT_ADDRESS,
         abi: CONTRACT_ABI,
@@ -238,7 +245,20 @@ export function useHabitTracker() {
       console.error(`[v0] Transaction failed for ${functionName}:`, err)
 
       let errorMessage = "Transaction failed"
-      if (err.message?.includes("insufficient funds")) {
+
+      if (
+        functionName === "checkIn" &&
+        (err.message?.includes("Already checked in today") ||
+          err.shortMessage?.includes("Already checked in today") ||
+          err.details?.includes("Already checked in today"))
+      ) {
+        errorMessage = "You've already checked in today! Come back in 24 hours to maintain your streak."
+        toast({
+          title: "Already Checked In Today",
+          description: "You can only check in once per day. Come back tomorrow to continue your streak! 🔥",
+          variant: "default", // Using default instead of destructive for a friendlier tone
+        })
+      } else if (err.message?.includes("insufficient funds")) {
         errorMessage = "Insufficient funds for gas fees"
       } else if (err.message?.includes("nonce")) {
         errorMessage = "Nonce error - please try again"
@@ -251,19 +271,29 @@ export function useHabitTracker() {
       }
 
       setTransactionError(errorMessage)
-      toast({
-        title: "Transaction Failed",
-        description: errorMessage,
-        variant: "destructive",
-      })
+
+      if (
+        !(
+          functionName === "checkIn" &&
+          (err.message?.includes("Already checked in today") ||
+            err.shortMessage?.includes("Already checked in today") ||
+            err.details?.includes("Already checked in today"))
+        )
+      ) {
+        toast({
+          title: "Transaction Failed",
+          description: errorMessage,
+          variant: "destructive",
+        })
+      }
+
       setLoadingState(false)
       return false
     }
   }
-  // --- end executeTransaction ---
 
   const loadHabitsFromBlockchain = useCallback(
-    async (forceRefresh = false) => {
+    async (forceRefresh = false, retryCount = 0) => {
       if (!address) {
         setHabits([])
         return
@@ -280,72 +310,99 @@ export function useHabitTracker() {
       setIsLoadingHabits(true)
 
       try {
-        const { data: currentCount } = await refetchCount()
-        const count = Number(currentCount || 0)
+        console.log(`[v0] Fetching habits for user: ${address} (attempt ${retryCount + 1})`)
 
-        if (count === 0) {
-          const emptyHabits: Habit[] = []
-          setHabits(emptyHabits)
-          setCachedHabits(address, emptyHabits)
+        const currentBlock = await publicClient.getBlockNumber()
+        console.log(`[v0] Current block number: ${currentBlock}`)
+
+        const habitsData = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: "getHabits",
+          args: [address],
+          chainId: BASE_MAINNET_CHAIN_ID,
+          blockTag: "latest",
+        })
+
+        console.log(`[v0] Raw habits data:`, habitsData)
+
+        if (!habitsData) {
+          console.log(`[v0] No habits data returned`)
+          setHabits([])
+          setCachedHabits(address, [])
+          setIsLoadingHabits(false)
+          return
+        }
+
+        const [titles, descriptions, categories, streaks, lastCheckins, actives] = habitsData
+
+        console.log(`[v0] Habits data breakdown:`, {
+          titlesLength: titles?.length || 0,
+          descriptionsLength: descriptions?.length || 0,
+          categoriesLength: categories?.length || 0,
+          streaksLength: streaks?.length || 0,
+          lastCheckinsLength: lastCheckins?.length || 0,
+          activesLength: actives?.length || 0,
+        })
+
+        if (!titles || titles.length === 0) {
+          console.log(`[v0] No habits found for user`)
+
+          if (retryCount < 3 && forceRefresh) {
+            console.log(`[v0] Retrying habit fetch in 3 seconds... (attempt ${retryCount + 1}/3)`)
+            setIsLoadingHabits(false)
+            setTimeout(() => {
+              loadHabitsFromBlockchain(true, retryCount + 1)
+            }, 3000)
+            return
+          }
+
+          setHabits([])
+          setCachedHabits(address, [])
           setIsLoadingHabits(false)
           return
         }
 
         const loadedHabits: Habit[] = []
 
-        for (let i = 0; i < count; i++) {
-          try {
-            const habitData = await fetch(`/api/habit/${i}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ contractAddress: CONTRACT_ADDRESS, chainId: SOMNIA_CHAIN_ID }),
-            }).then((res) => res.json())
+        for (let i = 0; i < titles.length; i++) {
+          if (actives[i]) {
+            // Only include active habits
+            const lastCheckedIn = lastCheckins[i] ? Number(lastCheckins[i]) * 24 * 60 * 60 * 1000 : null
 
-            if (habitData && habitData.creator.toLowerCase() === address.toLowerCase()) {
-              let streak = 0
-              let totalCheckins = 0
-              let lastCheckedIn = null
+            loadedHabits.push({
+              id: i,
+              name: titles[i],
+              description: descriptions[i],
+              category: categories[i],
+              creator: address,
+              streak: Number(streaks[i]),
+              lastCheckedIn,
+              totalCheckins: Number(streaks[i]), // Using streak as total checkins for now
+            })
 
-              const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000))
-
-              for (let day = today; day >= Math.max(0, today - 365); day--) {
-                const isChecked = await fetch(`/api/checkin/${i}/${day}`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ contractAddress: CONTRACT_ADDRESS, chainId: SOMNIA_CHAIN_ID }),
-                }).then((res) => res.json())
-
-                if (isChecked) {
-                  totalCheckins++
-                  if (day === today || (streak > 0 && day === today - streak)) {
-                    streak++
-                    if (!lastCheckedIn) lastCheckedIn = day * 24 * 60 * 60 * 1000
-                  }
-                } else if (day === today - streak) {
-                  break
-                }
-              }
-
-              loadedHabits.push({
-                id: i,
-                name: habitData.name,
-                description: habitData.description,
-                category: habitData.category,
-                creator: habitData.creator,
-                streak,
-                lastCheckedIn,
-                totalCheckins,
-              })
-            }
-          } catch (error) {
-            console.error(`Error loading habit ${i}:`, error)
+            console.log(`[v0] Added habit ${i}:`, {
+              name: titles[i],
+              category: categories[i],
+              streak: Number(streaks[i]),
+            })
           }
         }
 
+        console.log(`[v0] Total loaded habits for user:`, loadedHabits.length)
         setHabits(loadedHabits)
         setCachedHabits(address, loadedHabits)
       } catch (error) {
-        console.error("Error loading habits from blockchain:", error)
+        console.error("[v0] Error loading habits from blockchain:", error)
+
+        if (retryCount < 2) {
+          console.log(`[v0] Retrying after error in 2 seconds... (attempt ${retryCount + 1}/2)`)
+          setTimeout(() => {
+            loadHabitsFromBlockchain(forceRefresh, retryCount + 1)
+          }, 2000)
+          return
+        }
+
         toast({
           title: "Error Loading Habits",
           description: "Failed to load habits from blockchain. Please try again.",
@@ -355,7 +412,7 @@ export function useHabitTracker() {
         setIsLoadingHabits(false)
       }
     },
-    [address, refetchCount],
+    [address, publicClient, toast],
   )
 
   useEffect(() => {
@@ -370,6 +427,7 @@ export function useHabitTracker() {
 
   useEffect(() => {
     if (isConfirmed) {
+      console.log("[v0] Transaction confirmed, refreshing habits data")
       setIsCreatingHabit(false)
       setIsCheckingIn(false)
 
@@ -383,18 +441,11 @@ export function useHabitTracker() {
       }
 
       setTimeout(() => {
-        loadHabitsFromBlockchain(true)
-      }, 1000)
+        console.log("[v0] Starting habit data refresh after transaction confirmation")
+        loadHabitsFromBlockchain(true, 0)
+      }, 5000) // Increased delay to 5 seconds
     }
-  }, [isConfirmed, loadHabitsFromBlockchain, address])
-
-  useEffect(() => {
-    if (transactionError) {
-      // already handled via executeTransaction toasts, but keep this for UX
-      setIsCreatingHabit(false)
-      setIsCheckingIn(false)
-    }
-  }, [transactionError])
+  }, [isConfirmed, loadHabitsFromBlockchain, address, toast])
 
   const addHabit = async (habitData: { name: string; description: string; category: string }) => {
     const success = await executeTransaction(
@@ -412,9 +463,27 @@ export function useHabitTracker() {
   }
 
   const checkInHabit = async (habitId: number) => {
-    const today = Math.floor(Date.now() / (24 * 60 * 60 * 1000))
+    const habit = habits.find((h) => h.id === habitId)
+    if (habit && habit.lastCheckedIn) {
+      const today = new Date()
+      const lastCheckinDate = new Date(habit.lastCheckedIn)
 
-    const success = await executeTransaction("checkIn", [BigInt(habitId), BigInt(today)], setIsCheckingIn)
+      // Check if the last check-in was today
+      if (
+        today.getFullYear() === lastCheckinDate.getFullYear() &&
+        today.getMonth() === lastCheckinDate.getMonth() &&
+        today.getDate() === lastCheckinDate.getDate()
+      ) {
+        toast({
+          title: "Already Checked In Today",
+          description: "You can only check in once per day. Come back tomorrow to continue your streak! 🔥",
+          variant: "default",
+        })
+        return
+      }
+    }
+
+    const success = await executeTransaction("checkIn", [BigInt(habitId)], setIsCheckingIn)
 
     if (success) {
       toast({
