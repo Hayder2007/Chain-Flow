@@ -34,4 +34,4 @@ ChainFlow merges habit tracking, task management, and automated onchain payouts 
 
 Frontend is built with Next.js + Vercel. Contract is build with Solidity.
 
-Fully compatible with Somnia Testnet smart contracts.
+Fully compatible with Base Mainnet smart contracts.
