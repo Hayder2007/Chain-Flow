@@ -14,7 +14,7 @@ ChainFlow merges habit tracking, task management, and automated onchain payouts 
 
 **Analytics & Insights**: Track performance with clear, immutable records.
 
-**Multi-Wallet Support**: Connect via MetaMask or any injected wallet, auto-switch to Somnia Testnet.
+**Multi-Wallet Support**: Connect via MetaMask or any injected wallet, auto-switch to Base Mainnet.
 
 ## 📈 Roadmap
 
