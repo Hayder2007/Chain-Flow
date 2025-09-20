@@ -85,12 +85,6 @@ export default function PersonalZone() {
       try {
         await checkInHabit(Number.parseInt(habitId))
         loadingToastId.dismiss()
-        setTimeout(() => {
-          toast({
-            title: "Great job!",
-            description: "Habit checked in successfully",
-          })
-        }, 500)
       } catch (error) {
         loadingToastId.dismiss()
         toast({

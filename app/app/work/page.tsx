@@ -78,60 +78,48 @@ export default function WorkZone() {
     }
 
     setIsCreatingTask(true)
+const loadingToast = toast({
+  title: "Creating task...",
+  description: "Recording task on the blockchain",
+})
 
-    const loadingToast = toast({
-      title: "Creating task...",
-      description: "Recording task on the blockchain",
-    })
+setTimeout(() => {
+  createTask({
+    ...newTask,
+    creator: address || "anonymous",
+  })
+  setNewTask({ title: "", description: "", assignee: "", reward: "" })
+  setIsCreateDialogOpen(false)
+  setIsCreatingTask(false)
 
-    setTimeout(() => {
-      createTask({
-        ...newTask,
-        creator: address || "anonymous",
-      })
-      setNewTask({ title: "", description: "", assignee: "", reward: "" })
-      setIsCreateDialogOpen(false)
-      setIsCreatingTask(false)
+  loadingToast.dismiss()
+}, 1800)
+}
 
-      loadingToast.dismiss()
-      toast({
-        title: "Success",
-        description: "Task created successfully!",
-      })
-    }, 1800)
-  }
+const handleMarkDone = (taskId: string) => {
+  const loadingToast = toast({
+    title: "Marking task done...",
+    description: "Recording completion on the blockchain",
+  })
 
-  const handleMarkDone = (taskId: string) => {
-    const loadingToast = toast({
-      title: "Marking task done...",
-      description: "Recording completion on the blockchain",
-    })
+  setTimeout(() => {
+    completeTaskByAssignee(Number(taskId))
+    loadingToast.dismiss()
+  }, 1200)
+}
 
-    setTimeout(() => {
-      completeTaskByAssignee(Number(taskId))
-      loadingToast.dismiss()
-      toast({
-        title: "Success",
-        description: "Task marked as done!",
-      })
-    }, 1200)
-  }
+const handleConfirmDone = (taskId: string) => {
+  const loadingToast = toast({
+    title: "Confirming task...",
+    description: "Processing confirmation on the blockchain",
+  })
 
-  const handleConfirmDone = (taskId: string) => {
-    const loadingToast = toast({
-      title: "Confirming task...",
-      description: "Processing confirmation on the blockchain",
-    })
+  setTimeout(() => {
+    confirmTaskByCreator(Number(taskId))
+    loadingToast.dismiss()
+  }, 1500)
+}
 
-    setTimeout(() => {
-      confirmTaskByCreator(Number(taskId))
-      loadingToast.dismiss()
-      toast({
-        title: "Success",
-        description: "Task confirmed successfully!",
-      })
-    }, 1500)
-  }
 
   const getStatusColor = (status: Task["status"]) => {
     switch (status) {

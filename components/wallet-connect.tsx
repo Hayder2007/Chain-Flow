@@ -17,53 +17,95 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
   const [isOpen, setIsOpen] = useState(false)
   const { toast } = useToast()
 
+  const switchToBase = async () => {
+    try {
+      await switchChain({ chainId: baseMainnet.id })
+      toast({
+        title: "Network Switched",
+        description: "Successfully connected to Base Mainnet",
+      })
+    } catch (error: any) {
+      console.log("[v0] Switch chain error:", error)
+
+      // If chain is not added to wallet, try to add it
+      if (error.code === 4902 || error.message?.includes("Unrecognized chain ID")) {
+        try {
+          // Add Base Mainnet to wallet
+          await window.ethereum?.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0x2105", // 8453 in hex
+                chainName: "Base",
+                nativeCurrency: {
+                  name: "Ether",
+                  symbol: "ETH",
+                  decimals: 18,
+                },
+                rpcUrls: ["https://mainnet.base.org"],
+                blockExplorerUrls: ["https://basescan.org"],
+              },
+            ],
+          })
+
+          // After adding, try to switch again
+          await switchChain({ chainId: baseMainnet.id })
+          toast({
+            title: "Base Network Added",
+            description: "Base Mainnet has been added and selected",
+          })
+        } catch (addError: any) {
+          console.log("[v0] Add chain error:", addError)
+          toast({
+            title: "Network Setup Failed",
+            description: "Please manually add Base Mainnet to your wallet",
+            variant: "destructive",
+          })
+        }
+      } else if (error.code === 4001) {
+        // User rejected the request
+        toast({
+          title: "Network Switch Cancelled",
+          description: "You need to be on Base Mainnet to use this app",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Network Switch Failed",
+          description: "Please manually switch to Base Mainnet",
+          variant: "destructive",
+        })
+      }
+    }
+  }
+
   useEffect(() => {
     if (isConnected && chainId !== baseMainnet.id) {
-      switchChain(
-        { chainId: baseMainnet.id },
-        {
-          onError: (error) => {
-            toast({
-              title: "Network Switch Required",
-              description: "Please switch to Base Mainnet to use this app",
-              variant: "destructive",
-            })
-          },
-          onSuccess: () => {
-            toast({
-              title: "Network Switched",
-              description: "Successfully connected to Base Mainnet",
-            })
-          },
-        },
-      )
+      switchToBase()
     }
-  }, [isConnected, chainId, switchChain, toast])
+  }, [isConnected, chainId])
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
   }
 
-  const handleConnect = (connector: any) => {
-    connect(
-      { connector },
-      {
-        onSuccess: () => {
-          // Network switching will be handled by useEffect
-          toast({
-            title: "Wallet Connected",
-            description: "Switching to Base Mainnet...",
-          })
-        },
-        onError: (error) => {
-          toast({
-            title: "Connection Failed",
-            description: error.message,
-            variant: "destructive",
-          })
-        },
-      },
-    )
+  const handleConnect = async (connector: any) => {
+    try {
+      await connect({ connector })
+      toast({
+        title: "Wallet Connected",
+        description: "Checking network...",
+      })
+
+      // Network switching will be handled by useEffect after connection
+    } catch (error: any) {
+      console.log("[v0] Connection error:", error)
+      toast({
+        title: "Connection Failed",
+        description: error.message || "Failed to connect wallet",
+        variant: "destructive",
+      })
+    }
     setIsOpen(false)
   }
 
@@ -77,24 +119,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
   }
 
   const handleNetworkSwitch = () => {
-    switchChain(
-      { chainId: baseMainnet.id },
-      {
-        onSuccess: () => {
-          toast({
-            title: "Network Switched",
-            description: "Successfully switched to Base Mainnet",
-          })
-        },
-        onError: (error) => {
-          toast({
-            title: "Switch Failed",
-            description: "Failed to switch network. Please try manually.",
-            variant: "destructive",
-          })
-        },
-      },
-    )
+    switchToBase()
   }
 
   const isWrongNetwork = isConnected && chainId !== baseMainnet.id
