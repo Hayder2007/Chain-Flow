@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@coinbase/wallet-mobile-sdk": "latest",
+    "@farcaster/miniapp-sdk": "latest",
     "@hookform/resolvers": "^3.9.1",
     "@mobile-wallet-protocol/client": "latest",
     "@radix-ui/react-accordion": "latest",

@@ -1,5 +1,10 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { sdk } from "@farcaster/miniapp-sdk"
+// your other imports...
+
+
 import type React from "react"
 
 import { useState, useEffect } from "react"
@@ -77,6 +82,11 @@ export default function LandingPage() {
       setIsSubmitting(false)
     }
   }
+
+  useEffect(() => {
+    sdk.actions.ready()
+}, [])
+
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: isDarkMode ? "#1A1A1A" : "#F5F7FA" }}>
@@ -1017,7 +1027,16 @@ export default function LandingPage() {
 
           {/* License Line */}
           <div className="text-center">
-            <p className="text-gray-400 text-sm">© 2025 ChainFlow. All rights reserved. | Built on Base By Hayder.</p>
+         <p className="text-gray-400 text-sm">
+  © 2025 ChainFlow. All rights reserved. | Built on Base By{" "}
+  <a 
+    href="https://hayder.online/" 
+    className="text-blue-500 hover:text-blue-400"
+  >
+    Hayder
+  </a>.
+</p>
+
           </div>
         </div>
       </footer>
