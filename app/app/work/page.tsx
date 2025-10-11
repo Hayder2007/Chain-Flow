@@ -37,7 +37,16 @@ export default function WorkZone() {
   const isDarkMode = theme === "dark"
   const [mounted, setMounted] = useState(false)
   const { address } = useAccount()
-  const { tasks, createTask, completeTaskByAssignee, confirmTaskByCreator, getStats, isLoading } = useTaskBoard()
+  const {
+    tasks,
+    createTask,
+    completeTaskByAssignee,
+    confirmTaskByCreator,
+    getStats,
+    isLoading,
+    currentChainId, // Get current chain ID
+    isChainSupported, // Get chain support status
+  } = useTaskBoard()
   const { toast } = useToast()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [submissionUrl, setSubmissionUrl] = useState("")
@@ -51,6 +60,28 @@ export default function WorkZone() {
   const [isCreatingTask, setIsCreatingTask] = useState(false)
 
   const stats = getStats
+
+  const getChainName = (chainId: number | undefined) => {
+    switch (chainId) {
+      case 8453:
+        return "Base Mainnet"
+      case 5031:
+        return "Somnia Mainnet"
+      default:
+        return "Unknown Network"
+    }
+  }
+
+  const getChainColor = (chainId: number | undefined) => {
+    switch (chainId) {
+      case 8453:
+        return "#0052FF" // Base blue
+      case 5031:
+        return "#00FFE5" // Somnia cyan
+      default:
+        return "#6B7280" // Gray
+    }
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -78,48 +109,47 @@ export default function WorkZone() {
     }
 
     setIsCreatingTask(true)
-const loadingToast = toast({
-  title: "Creating task...",
-  description: "Recording task on the blockchain",
-})
+    const loadingToast = toast({
+      title: "Creating task...",
+      description: "Recording task on the blockchain",
+    })
 
-setTimeout(() => {
-  createTask({
-    ...newTask,
-    creator: address || "anonymous",
-  })
-  setNewTask({ title: "", description: "", assignee: "", reward: "" })
-  setIsCreateDialogOpen(false)
-  setIsCreatingTask(false)
+    setTimeout(() => {
+      createTask({
+        ...newTask,
+        creator: address || "anonymous",
+      })
+      setNewTask({ title: "", description: "", assignee: "", reward: "" })
+      setIsCreateDialogOpen(false)
+      setIsCreatingTask(false)
 
-  loadingToast.dismiss()
-}, 1800)
-}
+      loadingToast.dismiss()
+    }, 1800)
+  }
 
-const handleMarkDone = (taskId: string) => {
-  const loadingToast = toast({
-    title: "Marking task done...",
-    description: "Recording completion on the blockchain",
-  })
+  const handleMarkDone = (taskId: string) => {
+    const loadingToast = toast({
+      title: "Marking task done...",
+      description: "Recording completion on the blockchain",
+    })
 
-  setTimeout(() => {
-    completeTaskByAssignee(Number(taskId))
-    loadingToast.dismiss()
-  }, 1200)
-}
+    setTimeout(() => {
+      completeTaskByAssignee(Number(taskId))
+      loadingToast.dismiss()
+    }, 1200)
+  }
 
-const handleConfirmDone = (taskId: string) => {
-  const loadingToast = toast({
-    title: "Confirming task...",
-    description: "Processing confirmation on the blockchain",
-  })
+  const handleConfirmDone = (taskId: string) => {
+    const loadingToast = toast({
+      title: "Confirming task...",
+      description: "Processing confirmation on the blockchain",
+    })
 
-  setTimeout(() => {
-    confirmTaskByCreator(Number(taskId))
-    loadingToast.dismiss()
-  }, 1500)
-}
-
+    setTimeout(() => {
+      confirmTaskByCreator(Number(taskId))
+      loadingToast.dismiss()
+    }, 1500)
+  }
 
   const getStatusColor = (status: Task["status"]) => {
     switch (status) {
@@ -185,6 +215,17 @@ const handleConfirmDone = (taskId: string) => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
+            {address && (
+              <Badge
+                className="px-3 py-1 font-medium"
+                style={{
+                  backgroundColor: isChainSupported ? getChainColor(currentChainId) : "#EF4444",
+                  color: "#FFFFFF",
+                }}
+              >
+                {isChainSupported ? getChainName(currentChainId) : "Unsupported Network"}
+              </Badge>
+            )}
             <WalletConnect isDarkMode={isDarkMode} />
             <button
               onClick={toggleTheme}
@@ -216,7 +257,7 @@ const handleConfirmDone = (taskId: string) => {
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90">
+                <Button className="bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90" disabled={!isChainSupported}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Task
                 </Button>
@@ -276,7 +317,7 @@ const handleConfirmDone = (taskId: string) => {
                   </div>
                   <div>
                     <Label htmlFor="reward" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                      Reward (ETH)
+                      Reward ({currentChainId === 5031 ? "SOMI" : "ETH"})
                     </Label>
                     <Input
                       id="reward"
@@ -310,6 +351,22 @@ const handleConfirmDone = (taskId: string) => {
               </DialogContent>
             </Dialog>
           </div>
+
+          {address && !isChainSupported && (
+            <Card
+              className="border-2 border-red-500/50 mb-8"
+              style={{ backgroundColor: isDarkMode ? "rgba(239, 68, 68, 0.1)" : "rgba(239, 68, 68, 0.05)" }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <p className="text-red-500 font-medium">
+                    Please switch to Base Mainnet or Somnia Mainnet to use WorkZone features
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card
@@ -385,7 +442,9 @@ const handleConfirmDone = (taskId: string) => {
                     >
                       Total Rewards
                     </p>
-                    <p className="text-2xl font-bold text-[#00FFE5]">{stats.totalRewards.toFixed(3)} ETH</p>
+                    <p className="text-2xl font-bold text-[#00FFE5]">
+                      {stats.totalRewards.toFixed(3)} {currentChainId === 5031 ? "SOMI" : "ETH"}
+                    </p>
                   </div>
                   <DollarSign className="w-8 h-8 text-[#00FFE5]" />
                 </div>

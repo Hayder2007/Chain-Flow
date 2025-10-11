@@ -10,7 +10,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Target, Plus, CheckCircle, Flame, TrendingUp, Sun, Moon, ArrowLeft, Activity, Zap } from "lucide-react"
+import {
+  Target,
+  Plus,
+  CheckCircle,
+  Flame,
+  TrendingUp,
+  Sun,
+  Moon,
+  ArrowLeft,
+  Activity,
+  Zap,
+  AlertCircle,
+} from "lucide-react"
 import Link from "next/link"
 import { useTheme } from "@/components/theme-provider"
 import { WalletConnect } from "@/components/wallet-connect"
@@ -22,8 +34,9 @@ import { LoadingSpinner } from "@/components/loading-spinner"
 export default function PersonalZone() {
   const { theme, toggleTheme } = useTheme()
   const isDarkMode = theme === "dark"
-  const { address } = useAccount()
-  const { habits, addHabit, checkInHabit, getStats, isLoadingHabits } = useHabitTracker()
+  const { address, chain } = useAccount()
+  const { habits, addHabit, checkInHabit, getStats, isLoadingHabits, contractAddress, isChainSupported } =
+    useHabitTracker()
   const { toast } = useToast()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [newHabit, setNewHabit] = useState({
@@ -34,6 +47,14 @@ export default function PersonalZone() {
   const [isCreatingHabit, setIsCreatingHabit] = useState(false)
 
   const stats = getStats
+
+  const getChainInfo = () => {
+    if (chain?.id === 8453) return { name: "Base", currency: "ETH", color: "#0052FF" }
+    if (chain?.id === 5031) return { name: "Somnia", currency: "SOMI", color: "#00FFE5" }
+    return { name: "Unknown", currency: "ETH", color: "#6B7280" }
+  }
+
+  const chainInfo = getChainInfo()
 
   const handleCreateHabit = useCallback(async () => {
     if (!newHabit.name.trim()) {
@@ -164,6 +185,22 @@ export default function PersonalZone() {
               <span>/</span>
               <span>Personal</span>
             </div>
+            {address && chain && (
+              <Badge
+                variant="outline"
+                className="flex items-center space-x-1"
+                style={{
+                  borderColor: isChainSupported ? chainInfo.color : "#EF4444",
+                  color: isChainSupported ? chainInfo.color : "#EF4444",
+                }}
+              >
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: isChainSupported ? chainInfo.color : "#EF4444" }}
+                />
+                <span>{isChainSupported ? chainInfo.name : "Unsupported"}</span>
+              </Badge>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             <WalletConnect isDarkMode={isDarkMode} />
@@ -199,7 +236,10 @@ export default function PersonalZone() {
             </div>
             <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90">
+                <Button
+                  className="bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
+                  disabled={!address || !isChainSupported}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   New Habit
                 </Button>
@@ -285,6 +325,28 @@ export default function PersonalZone() {
               </DialogContent>
             </Dialog>
           </div>
+
+          {address && !isChainSupported && (
+            <Card
+              className="border-2 border-red-500/20 mb-8"
+              style={{ backgroundColor: isDarkMode ? "rgba(239, 68, 68, 0.1)" : "rgba(239, 68, 68, 0.05)" }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="w-6 h-6 text-red-500" />
+                  <div>
+                    <h3 className="font-semibold text-red-500">Unsupported Network</h3>
+                    <p
+                      className="text-sm"
+                      style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
+                    >
+                      Please switch to Base Mainnet or Somnia Mainnet to use Personal Zone features.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -448,9 +510,9 @@ export default function PersonalZone() {
 
                       <div className="flex space-x-2 pt-2">
                         <Button
-                          onClick={() => handleCheckIn(habit.id)}
+                          onClick={() => handleCheckIn(habit.id.toString())}
                           className="flex-1 bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
-                          disabled={!address}
+                          disabled={!address || !isChainSupported}
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Check In
@@ -475,13 +537,15 @@ export default function PersonalZone() {
                 style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
               >
                 {address
-                  ? "Create your first habit to start building consistency"
+                  ? isChainSupported
+                    ? "Create your first habit to start building consistency"
+                    : "Switch to a supported network to create habits"
                   : "Connect your wallet to create habits"}
               </p>
               <Button
                 onClick={() => setIsCreateDialogOpen(true)}
                 className="bg-[#00FFE5] text-[#1A1A1A] hover:bg-[#00FFE5]/90"
-                disabled={!address}
+                disabled={!address || !isChainSupported}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Your First Habit

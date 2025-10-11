@@ -269,7 +269,7 @@ export default function LandingPage() {
                 className="text-sm font-medium"
                 style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
               >
-                Built on Base
+                Live on Base & Somnia
               </span>
             </div>
 
@@ -386,7 +386,7 @@ export default function LandingPage() {
                 Connect Wallet
               </h3>
               <p style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}>
-                Connect your Web3 wallet to the Somnia Testnet and start your decentralized journey
+                Connect your Web3 wallet to the Supported Chain and start your decentralized journey
               </p>
             </div>
 
@@ -867,18 +867,18 @@ export default function LandingPage() {
               <CardContent className="p-0">
                 <div className="w-20 h-20 mx-auto mb-0 flex items-center justify-center -translate-y-2">
                   <svg className="w-20 h-20" viewBox="0 0 318.6 318.6" fill="none">
-                    <image href="/Remix.svg" width="318.6" height="318.6" />
+                    <image href="/Somnia-Logo.png" width="318.6" height="318.6" />
                   </svg>
                 </div>
 
                 <h3 className="text-lg font-bold mb-2" style={{ color: isDarkMode ? "#F5F7FA" : "#1A1A1A" }}>
-                  Remix
+                  Somnia
                 </h3>
                 <p
                   className="text-sm"
                   style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.7)" : "rgba(107, 114, 128, 1)" }}
                 >
-                  Ethereum smart contract IDE
+                  Next-Gen L1 for Scalable On-Chain Worlds
                 </p>
               </CardContent>
             </Card>
@@ -1028,7 +1028,7 @@ export default function LandingPage() {
           {/* License Line */}
           <div className="text-center">
          <p className="text-gray-400 text-sm">
-  © 2025 ChainFlow. All rights reserved. | Built on Base By{" "}
+  © 2025 ChainFlow. All rights reserved. | Built By{" "}
   <a 
     href="https://hayder.online/" 
     className="text-blue-500 hover:text-blue-400"

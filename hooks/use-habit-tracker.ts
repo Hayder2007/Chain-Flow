@@ -15,8 +15,13 @@ export interface Habit {
   totalCheckins: number
 }
 
-const CONTRACT_ADDRESS = "0x9Dd20671aF9F1E94a86FB904018fc84a82caD57F"
-const BASE_MAINNET_CHAIN_ID = 8453
+const CONTRACT_ADDRESSES = {
+  8453: "0x9Dd20671aF9F1E94a86FB904018fc84a82caD57F", // Base Mainnet
+  5031: "0x80131039D7d1b0F39Aa71c357022186D66beA2E3", // Somnia Mainnet
+} as const
+
+const SUPPORTED_CHAINS = [8453, 5031] as const
+type SupportedChainId = (typeof SUPPORTED_CHAINS)[number]
 
 const CACHE_KEY_PREFIX = "chainflow_habits_"
 const CACHE_EXPIRATION_MS = 5 * 60 * 1000 // 5 minutes
@@ -119,18 +124,28 @@ export function useHabitTracker() {
     hash: currentTxHash,
   })
 
-  const getCacheKey = (walletAddress: string) => `${CACHE_KEY_PREFIX}${walletAddress.toLowerCase()}`
+  const contractAddress = useMemo(() => {
+    const chainId = chain?.id as SupportedChainId
+    return CONTRACT_ADDRESSES[chainId] || CONTRACT_ADDRESSES[8453]
+  }, [chain?.id])
 
-  const getCachedHabits = (walletAddress: string): Habit[] | null => {
+  const isChainSupported = useMemo(() => {
+    return SUPPORTED_CHAINS.includes(chain?.id as SupportedChainId)
+  }, [chain?.id])
+
+  const getCacheKey = (walletAddress: string, chainId: number) =>
+    `${CACHE_KEY_PREFIX}${walletAddress.toLowerCase()}_${chainId}`
+
+  const getCachedHabits = (walletAddress: string, chainId: number): Habit[] | null => {
     try {
-      const cached = sessionStorage.getItem(getCacheKey(walletAddress))
+      const cached = sessionStorage.getItem(getCacheKey(walletAddress, chainId))
       if (!cached) return null
 
       const { data, timestamp } = JSON.parse(cached)
       const now = Date.now()
 
       if (now - timestamp > CACHE_EXPIRATION_MS) {
-        sessionStorage.removeItem(getCacheKey(walletAddress))
+        sessionStorage.removeItem(getCacheKey(walletAddress, chainId))
         return null
       }
 
@@ -141,22 +156,22 @@ export function useHabitTracker() {
     }
   }
 
-  const setCachedHabits = (walletAddress: string, habits: Habit[]) => {
+  const setCachedHabits = (walletAddress: string, chainId: number, habits: Habit[]) => {
     try {
       const cacheData = {
         data: habits,
         timestamp: Date.now(),
       }
-      sessionStorage.setItem(getCacheKey(walletAddress), JSON.stringify(cacheData))
+      sessionStorage.setItem(getCacheKey(walletAddress, chainId), JSON.stringify(cacheData))
     } catch (error) {
       console.error("Error caching habits:", error)
     }
   }
 
-  const clearCache = (walletAddress?: string) => {
+  const clearCache = (walletAddress?: string, chainId?: number) => {
     try {
-      if (walletAddress) {
-        sessionStorage.removeItem(getCacheKey(walletAddress))
+      if (walletAddress && chainId) {
+        sessionStorage.removeItem(getCacheKey(walletAddress, chainId))
       } else {
         // Clear all chainflow habit caches
         Object.keys(sessionStorage).forEach((key) => {
@@ -170,23 +185,6 @@ export function useHabitTracker() {
     }
   }
 
-  const ensureCorrectNetwork = async () => {
-    if (chain?.id !== BASE_MAINNET_CHAIN_ID) {
-      try {
-        await switchChain({ chainId: BASE_MAINNET_CHAIN_ID })
-        return true
-      } catch (error) {
-        toast({
-          title: "Network Switch Required",
-          description: "Please switch to Base Mainnet to use this feature.",
-          variant: "destructive",
-        })
-        return false
-      }
-    }
-    return true
-  }
-
   const executeTransaction = async (functionName: string, args: any[], setLoadingState: (l: boolean) => void) => {
     if (!address || !walletClient || !publicClient) {
       toast({
@@ -197,8 +195,14 @@ export function useHabitTracker() {
       return false
     }
 
-    const networkOk = await ensureCorrectNetwork()
-    if (!networkOk) return false
+    if (!isChainSupported) {
+      toast({
+        title: "Unsupported Network",
+        description: "Please switch to Base Mainnet or Somnia Mainnet to use this feature.",
+        variant: "destructive",
+      })
+      return false
+    }
 
     setLoadingState(true)
     setTransactionError(null)
@@ -210,7 +214,7 @@ export function useHabitTracker() {
       })
 
       const gasEstimate = await publicClient.estimateContractGas({
-        address: CONTRACT_ADDRESS,
+        address: contractAddress,
         abi: CONTRACT_ABI,
         functionName: functionName as any,
         args: args,
@@ -220,10 +224,12 @@ export function useHabitTracker() {
       const gasLimit = (gasEstimate * 15n) / 10n
       const gasPrice = await publicClient.getGasPrice()
 
-      console.log(`[v0] Transaction params - Function: ${functionName}, Gas: ${gasLimit}, Nonce: ${nonce}`)
+      console.log(
+        `[v0] Transaction params - Function: ${functionName}, Gas: ${gasLimit}, Nonce: ${nonce}, Chain: ${chain?.id}`,
+      )
 
       const hash = await walletClient.writeContract({
-        address: CONTRACT_ADDRESS,
+        address: contractAddress,
         abi: CONTRACT_ABI,
         functionName: functionName as any,
         args: args,
@@ -256,7 +262,7 @@ export function useHabitTracker() {
         toast({
           title: "Already Checked In Today",
           description: "You can only check in once per day. Come back tomorrow to continue your streak! 🔥",
-          variant: "default", // Using default instead of destructive for a friendlier tone
+          variant: "default",
         })
       } else if (err.message?.includes("insufficient funds")) {
         errorMessage = "Insufficient funds for gas fees"
@@ -294,13 +300,19 @@ export function useHabitTracker() {
 
   const loadHabitsFromBlockchain = useCallback(
     async (forceRefresh = false, retryCount = 0) => {
-      if (!address) {
+      if (!address || !chain?.id) {
+        setHabits([])
+        return
+      }
+
+      if (!isChainSupported) {
+        console.log(`[v0] Chain ${chain?.id} not supported for habits`)
         setHabits([])
         return
       }
 
       if (!forceRefresh) {
-        const cachedHabits = getCachedHabits(address)
+        const cachedHabits = getCachedHabits(address, chain.id)
         if (cachedHabits) {
           setHabits(cachedHabits)
           return
@@ -310,17 +322,16 @@ export function useHabitTracker() {
       setIsLoadingHabits(true)
 
       try {
-        console.log(`[v0] Fetching habits for user: ${address} (attempt ${retryCount + 1})`)
+        console.log(`[v0] Fetching habits for user: ${address} on chain ${chain.id} (attempt ${retryCount + 1})`)
 
         const currentBlock = await publicClient.getBlockNumber()
         console.log(`[v0] Current block number: ${currentBlock}`)
 
         const habitsData = await publicClient.readContract({
-          address: CONTRACT_ADDRESS,
+          address: contractAddress,
           abi: CONTRACT_ABI,
           functionName: "getHabits",
           args: [address],
-          chainId: BASE_MAINNET_CHAIN_ID,
           blockTag: "latest",
         })
 
@@ -329,7 +340,7 @@ export function useHabitTracker() {
         if (!habitsData) {
           console.log(`[v0] No habits data returned`)
           setHabits([])
-          setCachedHabits(address, [])
+          setCachedHabits(address, chain.id, [])
           setIsLoadingHabits(false)
           return
         }
@@ -358,7 +369,7 @@ export function useHabitTracker() {
           }
 
           setHabits([])
-          setCachedHabits(address, [])
+          setCachedHabits(address, chain.id, [])
           setIsLoadingHabits(false)
           return
         }
@@ -367,7 +378,6 @@ export function useHabitTracker() {
 
         for (let i = 0; i < titles.length; i++) {
           if (actives[i]) {
-            // Only include active habits
             const lastCheckedIn = lastCheckins[i] ? Number(lastCheckins[i]) * 24 * 60 * 60 * 1000 : null
 
             loadedHabits.push({
@@ -378,7 +388,7 @@ export function useHabitTracker() {
               creator: address,
               streak: Number(streaks[i]),
               lastCheckedIn,
-              totalCheckins: Number(streaks[i]), // Using streak as total checkins for now
+              totalCheckins: Number(streaks[i]),
             })
 
             console.log(`[v0] Added habit ${i}:`, {
@@ -391,7 +401,7 @@ export function useHabitTracker() {
 
         console.log(`[v0] Total loaded habits for user:`, loadedHabits.length)
         setHabits(loadedHabits)
-        setCachedHabits(address, loadedHabits)
+        setCachedHabits(address, chain.id, loadedHabits)
       } catch (error) {
         console.error("[v0] Error loading habits from blockchain:", error)
 
@@ -412,7 +422,7 @@ export function useHabitTracker() {
         setIsLoadingHabits(false)
       }
     },
-    [address, publicClient, toast],
+    [address, publicClient, toast, chain?.id, contractAddress, isChainSupported],
   )
 
   useEffect(() => {
@@ -426,6 +436,12 @@ export function useHabitTracker() {
   }, [address])
 
   useEffect(() => {
+    if (address && chain?.id) {
+      loadHabitsFromBlockchain(true)
+    }
+  }, [chain?.id])
+
+  useEffect(() => {
     if (isConfirmed) {
       console.log("[v0] Transaction confirmed, refreshing habits data")
       setIsCreatingHabit(false)
@@ -436,16 +452,16 @@ export function useHabitTracker() {
         description: "Your transaction has been confirmed on the blockchain!",
       })
 
-      if (address) {
-        clearCache(address)
+      if (address && chain?.id) {
+        clearCache(address, chain.id)
       }
 
       setTimeout(() => {
         console.log("[v0] Starting habit data refresh after transaction confirmation")
         loadHabitsFromBlockchain(true, 0)
-      }, 5000) // Increased delay to 5 seconds
+      }, 5000)
     }
-  }, [isConfirmed, loadHabitsFromBlockchain, address, toast])
+  }, [isConfirmed, loadHabitsFromBlockchain, address, chain?.id, toast])
 
   const addHabit = async (habitData: { name: string; description: string; category: string }) => {
     const success = await executeTransaction(
@@ -468,7 +484,6 @@ export function useHabitTracker() {
       const today = new Date()
       const lastCheckinDate = new Date(habit.lastCheckedIn)
 
-      // Check if the last check-in was today
       if (
         today.getFullYear() === lastCheckinDate.getFullYear() &&
         today.getMonth() === lastCheckinDate.getMonth() &&
@@ -512,5 +527,7 @@ export function useHabitTracker() {
     isCreatingHabit: isCreatingHabit || isConfirming,
     isCheckingIn: isCheckingIn || isConfirming,
     transactionError,
+    contractAddress, // Export contract address for display
+    isChainSupported, // Export chain support status
   }
 }

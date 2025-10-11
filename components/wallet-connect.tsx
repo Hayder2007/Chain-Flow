@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAccount, useConnect, useDisconnect, useSwitchChain, useChainId } from "wagmi"
 import { Button } from "@/components/ui/button"
 import { Wallet, ChevronDown, AlertTriangle } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { baseMainnet } from "@/lib/wagmi"
+import { baseMainnet, somniaMainnet } from "@/lib/wagmi"
 import { useToast } from "@/hooks/use-toast"
 
 export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) {
@@ -17,6 +17,15 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
   const [isOpen, setIsOpen] = useState(false)
   const { toast } = useToast()
 
+  const SUPPORTED_CHAINS = [baseMainnet.id, somniaMainnet.id]
+  const isWrongNetwork = isConnected && !SUPPORTED_CHAINS.includes(chainId || 0)
+
+  const getChainName = (id: number | undefined) => {
+    if (id === baseMainnet.id) return "Base Mainnet"
+    if (id === somniaMainnet.id) return "Somnia Mainnet"
+    return "Unsupported Network"
+  }
+
   const switchToBase = async () => {
     try {
       await switchChain({ chainId: baseMainnet.id })
@@ -27,10 +36,8 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
     } catch (error: any) {
       console.log("[v0] Switch chain error:", error)
 
-      // If chain is not added to wallet, try to add it
       if (error.code === 4902 || error.message?.includes("Unrecognized chain ID")) {
         try {
-          // Add Base Mainnet to wallet
           await window.ethereum?.request({
             method: "wallet_addEthereumChain",
             params: [
@@ -48,7 +55,6 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
             ],
           })
 
-          // After adding, try to switch again
           await switchChain({ chainId: baseMainnet.id })
           toast({
             title: "Base Network Added",
@@ -63,27 +69,80 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
           })
         }
       } else if (error.code === 4001) {
-        // User rejected the request
         toast({
           title: "Network Switch Cancelled",
-          description: "You need to be on Base Mainnet to use this app",
+          description: "You need to be on a supported network to use this app",
           variant: "destructive",
         })
       } else {
         toast({
           title: "Network Switch Failed",
-          description: "Please manually switch to Base Mainnet",
+          description: "Please manually switch to a supported network",
           variant: "destructive",
         })
       }
     }
   }
 
-  useEffect(() => {
-    if (isConnected && chainId !== baseMainnet.id) {
-      switchToBase()
+  const switchToSomnia = async () => {
+    try {
+      await switchChain({ chainId: somniaMainnet.id })
+      toast({
+        title: "Network Switched",
+        description: "Successfully connected to Somnia Mainnet",
+      })
+    } catch (error: any) {
+      console.log("[v0] Switch chain error:", error)
+
+      if (error.code === 4902 || error.message?.includes("Unrecognized chain ID")) {
+        try {
+          await window.ethereum?.request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId: "0x13A7", // 5031 in hex
+                chainName: "Somnia Mainnet",
+                nativeCurrency: {
+                  name: "Somnia",
+                  symbol: "SOMI",
+                  decimals: 18,
+                },
+                rpcUrls: ["https://api.infra.mainnet.somnia.network"],
+                blockExplorerUrls: ["https://explorer.somnia.network"],
+              },
+            ],
+          })
+
+          await switchChain({ chainId: somniaMainnet.id })
+          toast({
+            title: "Somnia Network Added",
+            description: "Somnia Mainnet has been added and selected",
+          })
+        } catch (addError: any) {
+          console.log("[v0] Add chain error:", addError)
+          toast({
+            title: "Network Setup Failed",
+            description: "Please manually add Somnia Mainnet to your wallet",
+            variant: "destructive",
+          })
+        }
+      } else if (error.code === 4001) {
+        toast({
+          title: "Network Switch Cancelled",
+          description: "You need to be on a supported network to use this app",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Network Switch Failed",
+          description: "Please manually switch to a supported network",
+          variant: "destructive",
+        })
+      }
     }
-  }, [isConnected, chainId])
+  }
+
+  // Users can manually switch between Base and Somnia as needed
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -94,10 +153,8 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
       await connect({ connector })
       toast({
         title: "Wallet Connected",
-        description: "Checking network...",
+        description: "Please ensure you're on Base or Somnia Mainnet",
       })
-
-      // Network switching will be handled by useEffect after connection
     } catch (error: any) {
       console.log("[v0] Connection error:", error)
       toast({
@@ -118,25 +175,19 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
     setIsOpen(false)
   }
 
-  const handleNetworkSwitch = () => {
-    switchToBase()
-  }
-
-  const isWrongNetwork = isConnected && chainId !== baseMainnet.id
-
   if (isConnected && address) {
     return (
       <div className="flex items-center gap-2">
         {isWrongNetwork && (
           <Button
-            onClick={handleNetworkSwitch}
+            onClick={switchToBase}
             variant="outline"
             size="sm"
             className="flex items-center gap-2 text-orange-500 border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 bg-transparent"
             disabled={isSwitching}
           >
             <AlertTriangle className="w-4 h-4" />
-            {isSwitching ? "Switching..." : "Switch to Base"}
+            {isSwitching ? "Switching..." : "Switch Network"}
           </Button>
         )}
 
@@ -154,27 +205,32 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="w-48"
+            className="w-56"
             style={{
               backgroundColor: isDarkMode ? "#2A2A2A" : "#FFFFFF",
               borderColor: isDarkMode ? "rgba(245, 247, 250, 0.2)" : "rgba(0, 0, 0, 0.2)",
             }}
           >
             <DropdownMenuItem disabled className="text-xs opacity-60">
-              Network: {chainId === baseMainnet.id ? "Base Mainnet" : "Wrong Network"}
+              Network: {getChainName(chainId)}
             </DropdownMenuItem>
-            {isWrongNetwork && (
-              <DropdownMenuItem
-                onClick={handleNetworkSwitch}
-                className="text-orange-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                disabled={isSwitching}
-              >
-                {isSwitching ? "Switching..." : "Switch to Base"}
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem
+              onClick={switchToBase}
+              className="hover:bg-[#00FFE5]/10"
+              disabled={isSwitching || chainId === baseMainnet.id}
+            >
+              {chainId === baseMainnet.id ? "✓ " : ""}Switch to Base
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={switchToSomnia}
+              className="hover:bg-[#00FFE5]/10"
+              disabled={isSwitching || chainId === somniaMainnet.id}
+            >
+              {chainId === somniaMainnet.id ? "✓ " : ""}Switch to Somnia
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleDisconnect}
-              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border-t mt-1 pt-2"
             >
               Disconnect Wallet
             </DropdownMenuItem>
@@ -221,7 +277,7 @@ export function WalletConnect({ isDarkMode = false }: { isDarkMode?: boolean }) 
           </DropdownMenuItem>
         ))}
         <DropdownMenuItem disabled className="text-xs opacity-60 border-t mt-1 pt-2">
-          Will connect to: Base Mainnet
+          Supports: Base & Somnia
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

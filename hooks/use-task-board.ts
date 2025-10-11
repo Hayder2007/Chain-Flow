@@ -24,8 +24,13 @@ export interface Task {
   verificationNotes?: string
 }
 
-const WORK_CONTRACT_ADDRESS = "0x86D160b97534069E33362a713f47CFc8BD503346" as const
-const BASE_MAINNET_CHAIN_ID = 8453
+const WORK_CONTRACT_ADDRESSES = {
+  8453: "0x86D160b97534069E33362a713f47CFc8BD503346", // Base Mainnet
+  5031: "0xC28825AA274098Ff80e910BB8eC932456d4fdfD5", // Somnia Mainnet
+} as const
+
+const SUPPORTED_CHAIN_IDS = [8453, 5031] as const
+type SupportedChainId = (typeof SUPPORTED_CHAIN_IDS)[number]
 
 const CACHE_KEY_PREFIX = "chainflow_tasks_"
 const CACHE_EXPIRATION_MS = 5 * 60 * 1000 // 5 minutes
@@ -123,29 +128,41 @@ export function useTaskBoard() {
   const [transactionError, setTransactionError] = useState<string | null>(null)
   const [currentTxHash, setCurrentTxHash] = useState<`0x${string}` | undefined>()
 
+  const currentContractAddress = useMemo(() => {
+    if (!chainId || !SUPPORTED_CHAIN_IDS.includes(chainId as SupportedChainId)) {
+      return WORK_CONTRACT_ADDRESSES[8453] // Default to Base
+    }
+    return WORK_CONTRACT_ADDRESSES[chainId as SupportedChainId]
+  }, [chainId])
+
+  const isChainSupported = useMemo(() => {
+    return chainId ? SUPPORTED_CHAIN_IDS.includes(chainId as SupportedChainId) : false
+  }, [chainId])
+
   const { isLoading: isConfirmingReceipt, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
     hash: currentTxHash,
   })
 
   const { data: tasksCount, refetch: refetchTasksCount } = useReadContract({
-    address: WORK_CONTRACT_ADDRESS,
+    address: currentContractAddress as `0x${string}`,
     abi: WORK_CONTRACT_ABI,
     functionName: "getTasksCount",
-    chainId: BASE_MAINNET_CHAIN_ID,
+    chainId: chainId,
   })
 
-  const getCacheKey = (walletAddress: string) => `${CACHE_KEY_PREFIX}${walletAddress.toLowerCase()}`
+  const getCacheKey = (walletAddress: string, chain: number) =>
+    `${CACHE_KEY_PREFIX}${walletAddress.toLowerCase()}_${chain}`
 
-  const getCachedTasks = (walletAddress: string): Task[] | null => {
+  const getCachedTasks = (walletAddress: string, chain: number): Task[] | null => {
     try {
-      const cached = sessionStorage.getItem(getCacheKey(walletAddress))
+      const cached = sessionStorage.getItem(getCacheKey(walletAddress, chain))
       if (!cached) return null
 
       const { data, timestamp } = JSON.parse(cached)
       const now = Date.now()
 
       if (now - timestamp > CACHE_EXPIRATION_MS) {
-        sessionStorage.removeItem(getCacheKey(walletAddress))
+        sessionStorage.removeItem(getCacheKey(walletAddress, chain))
         return null
       }
 
@@ -156,22 +173,22 @@ export function useTaskBoard() {
     }
   }
 
-  const setCachedTasks = (walletAddress: string, tasks: Task[]) => {
+  const setCachedTasks = (walletAddress: string, chain: number, tasks: Task[]) => {
     try {
       const cacheData = {
         data: tasks,
         timestamp: Date.now(),
       }
-      sessionStorage.setItem(getCacheKey(walletAddress), JSON.stringify(cacheData))
+      sessionStorage.setItem(getCacheKey(walletAddress, chain), JSON.stringify(cacheData))
     } catch (error) {
       console.error("Error caching tasks:", error)
     }
   }
 
-  const clearCache = (walletAddress?: string) => {
+  const clearCache = (walletAddress?: string, chain?: number) => {
     try {
-      if (walletAddress) {
-        sessionStorage.removeItem(getCacheKey(walletAddress))
+      if (walletAddress && chain) {
+        sessionStorage.removeItem(getCacheKey(walletAddress, chain))
       } else {
         // Clear all chainflow task caches
         Object.keys(sessionStorage).forEach((key) => {
@@ -186,34 +203,34 @@ export function useTaskBoard() {
   }
 
   useWatchContractEvent({
-    address: WORK_CONTRACT_ADDRESS,
+    address: currentContractAddress as `0x${string}`,
     abi: WORK_CONTRACT_ABI,
     eventName: "TaskCreated",
     onLogs(logs) {
       console.log("[v0] TaskCreated event:", logs)
-      if (address) clearCache(address)
+      if (address && chainId) clearCache(address, chainId)
       refreshTasksData(true)
     },
   })
 
   useWatchContractEvent({
-    address: WORK_CONTRACT_ADDRESS,
+    address: currentContractAddress as `0x${string}`,
     abi: WORK_CONTRACT_ABI,
     eventName: "TaskDoneByAssignee",
     onLogs(logs) {
       console.log("[v0] TaskDoneByAssignee event:", logs)
-      if (address) clearCache(address)
+      if (address && chainId) clearCache(address, chainId)
       refreshTasksData(true)
     },
   })
 
   useWatchContractEvent({
-    address: WORK_CONTRACT_ADDRESS,
+    address: currentContractAddress as `0x${string}`,
     abi: WORK_CONTRACT_ABI,
     eventName: "TaskConfirmedByCreator",
     onLogs(logs) {
       console.log("[v0] TaskConfirmedByCreator event:", logs)
-      if (address) clearCache(address)
+      if (address && chainId) clearCache(address, chainId)
       refreshTasksData(true)
     },
   })
@@ -232,10 +249,10 @@ export function useTaskBoard() {
   }
 
   const refreshTasksData = async (forceRefresh = false) => {
-    if (!address) return
+    if (!address || !chainId) return
 
     if (!forceRefresh) {
-      const cachedTasks = getCachedTasks(address)
+      const cachedTasks = getCachedTasks(address, chainId)
       if (cachedTasks) {
         setTasks(cachedTasks)
         return
@@ -251,7 +268,7 @@ export function useTaskBoard() {
       if (count === 0) {
         const emptyTasks: Task[] = []
         setTasks(emptyTasks)
-        setCachedTasks(address, emptyTasks)
+        setCachedTasks(address, chainId, emptyTasks)
         setIsLoading(false)
         return
       }
@@ -260,7 +277,7 @@ export function useTaskBoard() {
 
       for (let i = 0; i < count; i++) {
         try {
-          const taskData = await fetch(`/api/task/${i}`, {
+          const taskData = await fetch(`/api/task/${i}?chainId=${chainId}`, {
             method: "GET",
           }).then((res) => res.json())
 
@@ -286,7 +303,7 @@ export function useTaskBoard() {
       )
 
       setTasks(userTasks)
-      setCachedTasks(address, userTasks)
+      setCachedTasks(address, chainId, userTasks)
     } catch (error) {
       console.error("Error refreshing tasks from blockchain:", error)
       toast({
@@ -300,10 +317,10 @@ export function useTaskBoard() {
   }
 
   useEffect(() => {
-    if (address && tasksCount !== undefined) {
+    if (address && tasksCount !== undefined && isChainSupported) {
       refreshTasksData()
     }
-  }, [tasksCount, address])
+  }, [tasksCount, address, chainId, isChainSupported])
 
   useEffect(() => {
     if (!address) {
@@ -317,13 +334,12 @@ export function useTaskBoard() {
       setIsCompletingTask(false)
       setIsConfirmingTask(false)
 
-      if (address) {
-        clearCache(address)
+      if (address && chainId) {
+        clearCache(address, chainId)
       }
 
       setTimeout(() => {
         refreshTasksData(true).then(() => {
-          // Force refresh from blockchain
           toast({
             title: "Success",
             description: "Transaction confirmed and data updated successfully!",
@@ -331,21 +347,16 @@ export function useTaskBoard() {
         })
       }, 1000)
     }
-  }, [isConfirmed, currentTxHash, address])
+  }, [isConfirmed, currentTxHash, address, chainId])
 
   const ensureCorrectNetwork = async () => {
-    if (chainId !== BASE_MAINNET_CHAIN_ID) {
-      try {
-        await switchChain({ chainId: BASE_MAINNET_CHAIN_ID })
-        return true
-      } catch (error) {
-        toast({
-          title: "Network Switch Required",
-          description: "Please switch to Base Mainnet to use this feature.",
-          variant: "destructive",
-        })
-        return false
-      }
+    if (!isChainSupported) {
+      toast({
+        title: "Unsupported Network",
+        description: "Please switch to Base Mainnet or Somnia Mainnet to use WorkZone.",
+        variant: "destructive",
+      })
+      return false
     }
     return true
   }
@@ -367,32 +378,28 @@ export function useTaskBoard() {
     setTransactionError(null)
 
     try {
-      // Get current nonce
       const nonce = await publicClient.getTransactionCount({
         address: address,
         blockTag: "pending",
       })
 
-      // Estimate gas for the transaction
       const gasEstimate = await publicClient.estimateContractGas({
-        address: WORK_CONTRACT_ADDRESS,
+        address: currentContractAddress as `0x${string}`,
         abi: WORK_CONTRACT_ABI,
         functionName: functionName as any,
         args: args,
         account: address,
       })
 
-      // Apply 1.5x buffer to gas estimate
       const gasLimit = (gasEstimate * 15n) / 10n
-
-      // Get current gas price
       const gasPrice = await publicClient.getGasPrice()
 
-      console.log(`[v0] Transaction params - Function: ${functionName}, Gas: ${gasLimit}, Nonce: ${nonce}`)
+      console.log(
+        `[v0] Transaction params - Function: ${functionName}, Gas: ${gasLimit}, Nonce: ${nonce}, Chain: ${chainId}`,
+      )
 
-      // Execute transaction with proper parameters
       const hash = await walletClient.writeContract({
-        address: WORK_CONTRACT_ADDRESS,
+        address: currentContractAddress as `0x${string}`,
         abi: WORK_CONTRACT_ABI,
         functionName: functionName as any,
         args: args,
@@ -497,6 +504,9 @@ export function useTaskBoard() {
     isCompletingTask: isCompletingTask || isConfirmingReceipt,
     isConfirmingTask: isConfirmingTask || isConfirmingReceipt,
     transactionError,
-    refreshTasks: () => refreshTasksData(true), // Force refresh when manually called
+    refreshTasks: () => refreshTasksData(true),
+    currentChainId: chainId, // Export current chain ID
+    isChainSupported, // Export chain support status
+    currentContractAddress, // Export current contract address
   }
 }

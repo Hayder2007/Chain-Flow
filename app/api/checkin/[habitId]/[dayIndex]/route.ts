@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createPublicClient, http } from "viem"
-import { defineChain } from "viem"
+import { createPublicClient } from "viem"
+import { defineChain } from "viem/chains"
+import { createBaseTransport, createSomniaTransport } from "@/lib/rpc-config"
 
 const baseMainnet = defineChain({
   id: 8453,
   name: "Base Mainnet",
-  network: "base-mainnet",
   nativeCurrency: {
     decimals: 18,
     name: "Ether",
@@ -15,8 +15,33 @@ const baseMainnet = defineChain({
     default: {
       http: ["https://mainnet.base.org"],
     },
+  },
+  blockExplorers: {
+    default: { name: "Base Explorer", url: "https://base.blockscout.com/" },
+  },
+})
+
+const somniaMainnet = defineChain({
+  id: 5031,
+  name: "Somnia Mainnet",
+  network: "somnia-mainnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "SOMI",
+    symbol: "SOMI",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://api.infra.mainnet.somnia.network/"],
+    },
     public: {
-      http: ["https://mainnet.base.org"],
+      http: ["https://api.infra.mainnet.somnia.network/"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Somnia Explorer",
+      url: "https://explorer.somnia.network",
     },
   },
 })
@@ -34,6 +59,16 @@ const CONTRACT_ABI = [
   },
 ] as const
 
+const baseClient = createPublicClient({
+  chain: baseMainnet,
+  transport: createBaseTransport(),
+})
+
+const somniaClient = createPublicClient({
+  chain: somniaMainnet,
+  transport: createSomniaTransport(),
+})
+
 export async function POST(request: NextRequest, { params }: { params: { habitId: string; dayIndex: string } }) {
   try {
     const { contractAddress, chainId } = await request.json()
@@ -44,10 +79,7 @@ export async function POST(request: NextRequest, { params }: { params: { habitId
       return NextResponse.json(false)
     }
 
-    const client = createPublicClient({
-      chain: baseMainnet,
-      transport: http(),
-    })
+    const client = chainId === 5031 ? somniaClient : baseClient
 
     try {
       const habitsCount = await client.readContract({
@@ -64,7 +96,6 @@ export async function POST(request: NextRequest, { params }: { params: { habitId
         functionName: "getHabitsCount",
       })
 
-      // If habitId is greater than or equal to total habits count, habit doesn't exist
       if (BigInt(habitId) >= habitsCount) {
         return NextResponse.json(false)
       }

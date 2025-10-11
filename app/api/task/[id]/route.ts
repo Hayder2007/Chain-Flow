@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createPublicClient, http } from "viem"
+import { createPublicClient } from "viem"
 import { defineChain } from "viem"
+import { createBaseTransport, createSomniaTransport } from "@/lib/rpc-config"
 
 const baseMainnet = defineChain({
   id: 8453,
@@ -20,7 +21,28 @@ const baseMainnet = defineChain({
   },
 })
 
-const WORK_CONTRACT_ADDRESS = "0x86D160b97534069E33362a713f47CFc8BD503346"
+const somniaMainnet = defineChain({
+  id: 5031,
+  name: "Somnia Mainnet",
+  nativeCurrency: {
+    decimals: 18,
+    name: "Somnia",
+    symbol: "SOMI",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://api.infra.mainnet.somnia.network"],
+    },
+  },
+  blockExplorers: {
+    default: { name: "Somnia Explorer", url: "https://explorer.somnia.network" },
+  },
+})
+
+const WORK_CONTRACT_ADDRESSES = {
+  8453: "0x86D160b97534069E33362a713f47CFc8BD503346", // Base Mainnet
+  5031: "0xC28825AA274098Ff80e910BB8eC932456d4fdfD5", // Somnia Mainnet
+} as const
 
 const WORK_CONTRACT_ABI = [
   {
@@ -39,17 +61,29 @@ const WORK_CONTRACT_ABI = [
   },
 ] as const
 
-const client = createPublicClient({
+const baseClient = createPublicClient({
   chain: baseMainnet,
-  transport: http(),
+  transport: createBaseTransport(),
+})
+
+const somniaClient = createPublicClient({
+  chain: somniaMainnet,
+  transport: createSomniaTransport(),
 })
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const taskId = Number.parseInt(params.id)
 
+    const { searchParams } = new URL(request.url)
+    const chainId = Number(searchParams.get("chainId")) || 8453
+
+    const client = chainId === 5031 ? somniaClient : baseClient
+    const contractAddress =
+      WORK_CONTRACT_ADDRESSES[chainId as keyof typeof WORK_CONTRACT_ADDRESSES] || WORK_CONTRACT_ADDRESSES[8453]
+
     const result = await client.readContract({
-      address: WORK_CONTRACT_ADDRESS as `0x${string}`,
+      address: contractAddress as `0x${string}`,
       abi: WORK_CONTRACT_ABI,
       functionName: "getTask",
       args: [BigInt(taskId)],
@@ -63,7 +97,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       reward,
       assignee,
       creator,
-      status, // Now returns status enum instead of boolean completed
+      status,
     })
   } catch (error) {
     console.error("Error fetching task:", error)
