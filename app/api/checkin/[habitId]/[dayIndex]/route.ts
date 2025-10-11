@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createPublicClient } from "viem"
-import { defineChain } from "viem/chains"
+import { createPublicClient, defineChain } from "viem"
 import { createBaseTransport, createSomniaTransport } from "@/lib/rpc-config"
 
 const baseMainnet = defineChain({
