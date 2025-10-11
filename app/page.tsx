@@ -866,8 +866,8 @@ export default function LandingPage() {
             >
               <CardContent className="p-0">
                 <div className="w-20 h-20 mx-auto mb-0 flex items-center justify-center -translate-y-2">
-                  <svg className="w-20 h-20" viewBox="0 0 318.6 318.6" fill="none">
-                    <image href="/Somnia-Logo.png" width="318.6" height="318.6" />
+                  <svg className="w-18 h-18 ml-0 pr-1.5 pl-2.5" viewBox="0 0 318.6 318.6" fill="none">
+                    <image href="/Somnia-Logo.png" width="290" height="318.6" />
                   </svg>
                 </div>
 
