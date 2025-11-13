@@ -2,7 +2,7 @@
 
 Your all-in-one onchain productivity & task management platform
 
-ChainFlow merges habit tracking, task management, and automated onchain payouts in one seamless flow. Think Notion, Trello, and GitHub—but fully decentralized and blockchain-verified.
+ChainFlow merges habit tracking, task management, and automated onchain payouts in one seamless flow. Think Notion or Trello but fully decentralized and blockchain-verified.
 
 ## 🚀 Features
 
@@ -29,6 +29,7 @@ ChainFlow merges habit tracking, task management, and automated onchain payouts 
 ## 🔗 Links
 
 **Dapp**: https://chainflow.store
+**Twitter(X)**: https://x.com/ChainFlow_xyz
 
 ## 💡 Notes
 
