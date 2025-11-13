@@ -356,7 +356,7 @@ export default function LandingPage() {
               style={{ color: isDarkMode ? "rgba(245, 247, 250, 0.8)" : "rgba(107, 114, 128, 1)" }}
             >
               ChainFlow is a smart-contract-powered platform merging task management, habit tracking, and automated
-              onchain payouts. Like Notion, Trello, and GitHub but fully onchain. Teams manage work, assign tasks, and
+              onchain payouts. Like Notion or Trello but fully onchain. Teams manage work, assign tasks, and
               track proof of effort. Individuals build habits. All verifiable. All transparent. All in one flow.
             </p>
           </div>
